@@ -184,6 +184,19 @@ public class PropertyPlaceholderHelper {
 		return result.toString();
 	}
 
+	/**
+	 * Tests if input string contains placeholder in form like {@code ${...}}.
+	 * @param value the String to test for placeholder contained
+	 * @return {@code true} if String contains non-empty placeholder,
+	 * and the {@code false} otherwise
+	 */
+	public boolean containsPlaceholder(String value) {
+		Assert.notNull(value, "'value' must not be null");
+		int startIndex = value.indexOf(this.placeholderPrefix);
+		int endIndex = value.lastIndexOf(this.placeholderSuffix);
+		return startIndex + 2 < endIndex;
+	}
+
 	private int findPlaceholderEndIndex(CharSequence buf, int startIndex) {
 		int index = startIndex + this.placeholderPrefix.length();
 		int withinNestedPlaceholder = 0;

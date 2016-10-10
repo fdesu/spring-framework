@@ -16,6 +16,8 @@
 
 package org.springframework.context.config;
 
+import org.springframework.util.PropertyPlaceholderHelper;
+import org.springframework.util.SystemPropertyUtils;
 import org.w3c.dom.Element;
 
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -32,6 +34,14 @@ import org.springframework.util.StringUtils;
  * @since 2.5.2
  */
 abstract class AbstractPropertyLoadingBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
+	private final PropertyPlaceholderHelper placeholderHelper;
+
+	AbstractPropertyLoadingBeanDefinitionParser() {
+		placeholderHelper = new PropertyPlaceholderHelper(
+				SystemPropertyUtils.PLACEHOLDER_PREFIX,
+				SystemPropertyUtils.PLACEHOLDER_SUFFIX
+		);
+	}
 
 	@Override
 	protected boolean shouldGenerateId() {
@@ -42,6 +52,9 @@ abstract class AbstractPropertyLoadingBeanDefinitionParser extends AbstractSingl
 	protected void doParse(Element element, BeanDefinitionBuilder builder) {
 		String location = element.getAttribute("location");
 		if (StringUtils.hasLength(location)) {
+			if (placeholderHelper.containsPlaceholder(location)) {
+				location = SystemPropertyUtils.resolvePlaceholders(location);
+			}
 			String[] locations = StringUtils.commaDelimitedListToStringArray(location);
 			builder.addPropertyValue("locations", locations);
 		}

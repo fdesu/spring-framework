@@ -26,7 +26,6 @@ import static org.junit.Assert.*;
  * @author Rob Harrop
  */
 public class PropertyPlaceholderHelperTests {
-
 	private final PropertyPlaceholderHelper helper = new PropertyPlaceholderHelper("${", "}");
 
 	@Test
@@ -112,6 +111,31 @@ public class PropertyPlaceholderHelperTests {
 
 		PropertyPlaceholderHelper helper = new PropertyPlaceholderHelper("${", "}", null, false);
 		assertEquals("foo=bar,bar=${bar}", helper.replacePlaceholders(text, props));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testNullPlaceholderPassedShouldThrowAnException() {
+		helper.containsPlaceholder(null);
+	}
+
+	@Test
+	public void testEmptyInputShouldReturnFalse() {
+		assertFalse(helper.containsPlaceholder(""));
+	}
+
+	@Test
+	public void testInvalidPlaceholder() {
+		assertFalse(helper.containsPlaceholder("}${"));
+	}
+
+	@Test
+	public void testEmptyPlaceholderShouldReturnFalse() {
+		assertFalse(helper.containsPlaceholder("${}"));
+	}
+
+	@Test
+	public void testNormalPlaceholder() {
+		assertTrue(helper.containsPlaceholder("${${test}"));
 	}
 
 }
