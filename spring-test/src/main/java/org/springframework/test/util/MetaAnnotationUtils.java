@@ -164,6 +164,54 @@ public abstract class MetaAnnotationUtils {
         return findAnnotationDescriptorOnMethod(method, method.getDeclaringClass(), new HashSet<>(), annotationType);
     }
 
+    @SafeVarargs
+    public static UntypedAnnotationDescriptor findAnnotationDescriptorsForMethod(
+            Method method, Class<? extends Annotation>... annotationType) {
+        return findAnnotationDescriptorsForMethod(method, method.getDeclaringClass(), new HashSet<>(), annotationType);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static UntypedAnnotationDescriptor findAnnotationDescriptorsForMethod(Method method,
+                                                                                  Class<?> declaringClass,
+                                                                                  Set<Annotation> visited,
+                                                                                  Class<? extends Annotation>... annotationTypes) {
+
+        assertNonEmptyAnnotationTypeArray(annotationTypes, "The list of annotation types must not be empty");
+        if (declaringClass == null || Object.class == declaringClass) {
+            return null;
+        }
+
+        Method superMethod = ReflectionUtils.findMethod(declaringClass, method.getName(), method.getParameterTypes());
+
+        if (superMethod == null) {
+            return null;
+        }
+
+        // Declared locally?
+        for (Class<? extends Annotation> annotationType : annotationTypes) {
+            Annotation annotation = AnnotationUtils.findAnnotation(superMethod, annotationType);
+            if (annotation != null) {
+                return new MethodUntypedAnnotationDescriptor(superMethod, annotation);
+            }
+        }
+
+        // Declared on a composed annotation (i.e., as a meta-annotation)?
+        for (Annotation composedAnnotation : superMethod.getDeclaredAnnotations()) {
+            if (!AnnotationUtils.isInJavaLangAnnotationPackage(composedAnnotation) && visited.add(composedAnnotation)) {
+                UntypedAnnotationDescriptor descriptor = findAnnotationDescriptorsForMethod(
+                        superMethod, composedAnnotation.annotationType(), visited, annotationTypes);
+                if (descriptor != null) {
+                    return new MethodUntypedAnnotationDescriptor(superMethod, descriptor.getDeclaringClass(), composedAnnotation,
+                            descriptor.getAnnotation());
+                }
+            }
+        }
+
+        // Declared on a superclass?
+        return findAnnotationDescriptorsForMethod(superMethod, superMethod.getDeclaringClass().getSuperclass(),
+                visited, annotationTypes);
+    }
+
 	/**
 	 * Find the {@link UntypedAnnotationDescriptor} for the first {@link Class}
 	 * in the inheritance hierarchy of the specified {@code clazz} (including
@@ -444,5 +492,20 @@ public abstract class MetaAnnotationUtils {
 					"getMergedAnnotation() is unsupported in UntypedAnnotationDescriptor");
 		}
 	}
+
+    public static class MethodUntypedAnnotationDescriptor extends UntypedAnnotationDescriptor {
+        private final Method method;
+
+        public MethodUntypedAnnotationDescriptor(Method method, Annotation annotation) {
+            super(method.getDeclaringClass(), annotation);
+            this.method = method;
+        }
+
+        public MethodUntypedAnnotationDescriptor(Method method, Class<?> declaringClass,
+                                           Annotation composedAnnotation, Annotation annotation) {
+            super(method.getDeclaringClass(), declaringClass, composedAnnotation, annotation);
+            this.method = method;
+        }
+    }
 
 }

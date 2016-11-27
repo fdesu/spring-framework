@@ -1,4 +1,4 @@
-package org.springframework.test.context.configuration.interfaces;
+package org.springframework.test.context.configuration.method;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

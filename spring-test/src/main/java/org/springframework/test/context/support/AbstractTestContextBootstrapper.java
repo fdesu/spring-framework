@@ -431,23 +431,43 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
     public final MergedContextConfiguration buildMergedContextConfiguration(Method method) {
         CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate = getCacheAwareContextLoaderDelegate();
 
-        if (MetaAnnotationUtils.findAnnotationDescriptorOnMethod(
-                method, ContextConfiguration.class) == null) {
+        if (MetaAnnotationUtils.findAnnotationDescriptorsForMethod(
+                method, ContextConfiguration.class, ContextHierarchy.class) == null) {
             return buildDefaultMergedContextConfiguration(getBootstrapContext().getTestClass(),
                     cacheAwareContextLoaderDelegate);
         }
-        List<ContextConfigurationAttributes> configAttributesList
-                = ContextLoaderUtils.resolveContextConfigurationAttributesOnMethod(method);
 
-        return buildMergedContextConfiguration(method.getDeclaringClass(),
-                configAttributesList,
-                null, cacheAwareContextLoaderDelegate, true);
+        if (AnnotationUtils.findAnnotation(method, ContextHierarchy.class) != null) {
+            Map<String, List<ContextConfigurationAttributes>> hierarchyMap =
+                    ContextLoaderUtils.buildContextHierarchyMap(method);
+            MergedContextConfiguration parentConfig = null;
+            MergedContextConfiguration mergedConfig = null;
 
-        /*return buildMergedContextConfiguration(
-                method.getDeclaringClass(), configAttributesList, null,
-                cacheAwareContextLoaderDelegate, true, resolveContextLoader(method.getDeclaringClass(), configAttributesList),
-                getContextCustomizers(method.getDeclaringClass(), Collections.unmodifiableList(configAttributesList)));*/
+            for (List<ContextConfigurationAttributes> list : hierarchyMap.values()) {
+                List<ContextConfigurationAttributes> reversedList = new ArrayList<>(list);
+                Collections.reverse(reversedList);
 
+                // Don't use the supplied testClass; instead ensure that we are
+                // building the MCC for the actual test class that declared the
+                // configuration for the current level in the context hierarchy.
+                Assert.notEmpty(reversedList, "ContextConfigurationAttributes list must not be empty");
+                Class<?> declaringClass = reversedList.get(0).getDeclaringClass();
+
+                mergedConfig = buildMergedContextConfiguration(
+                        declaringClass, reversedList, parentConfig, cacheAwareContextLoaderDelegate, true);
+                parentConfig = mergedConfig;
+            }
+
+            // Return the last level in the context hierarchy
+            return mergedConfig;
+        } else {
+            List<ContextConfigurationAttributes> configAttributesList
+                    = ContextLoaderUtils.resolveContextConfigurationAttributesOnMethod(method);
+
+            return buildMergedContextConfiguration(method.getDeclaringClass(),
+                    configAttributesList,
+                    null, cacheAwareContextLoaderDelegate, true);
+        }
     }
 
 	/**

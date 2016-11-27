@@ -299,11 +299,11 @@ public class TestContextManager {
     private TestContext prepareTestContext(TestContext testContext) {
         Method testMethod = testContext.getTestMethod();
         if (testMethod != null) {
-            MetaAnnotationUtils.AnnotationDescriptor<ContextConfiguration> contextConfigurationDescriptor
-                    = MetaAnnotationUtils.findAnnotationDescriptorOnMethod(
-                    testMethod, ContextConfiguration.class);
+            MetaAnnotationUtils.UntypedAnnotationDescriptor descriptor
+                    = MetaAnnotationUtils.findAnnotationDescriptorsForMethod(
+                    testMethod, ContextConfiguration.class, ContextHierarchy.class);
 
-            if (contextConfigurationDescriptor != null) {
+            if (descriptor != null) {
                 TestContextBootstrapper bootstrapper = BootstrapUtils.resolveTestContextBootstrapper(
                         BootstrapUtils.createBootstrapContext(testContext.getTestClass()));
 
