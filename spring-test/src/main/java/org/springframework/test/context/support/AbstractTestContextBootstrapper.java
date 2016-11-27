@@ -16,19 +16,8 @@
 
 package org.springframework.test.context.support;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
@@ -54,6 +43,17 @@ import org.springframework.test.util.MetaAnnotationUtils.AnnotationDescriptor;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Abstract implementation of the {@link TestContextBootstrapper} interface which
@@ -420,6 +420,35 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 		}
 		return customizers;
 	}
+
+    @Override
+    public TestContext buildTestContext(Method method) {
+        return new DefaultTestContext(getBootstrapContext().getTestClass(), buildMergedContextConfiguration(method),
+                getCacheAwareContextLoaderDelegate());
+    }
+
+    @SuppressWarnings("unchecked")
+    public final MergedContextConfiguration buildMergedContextConfiguration(Method method) {
+        CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate = getCacheAwareContextLoaderDelegate();
+
+        if (MetaAnnotationUtils.findAnnotationDescriptorOnMethod(
+                method, ContextConfiguration.class) == null) {
+            return buildDefaultMergedContextConfiguration(getBootstrapContext().getTestClass(),
+                    cacheAwareContextLoaderDelegate);
+        }
+        List<ContextConfigurationAttributes> configAttributesList
+                = ContextLoaderUtils.resolveContextConfigurationAttributesOnMethod(method);
+
+        return buildMergedContextConfiguration(method.getDeclaringClass(),
+                configAttributesList,
+                null, cacheAwareContextLoaderDelegate, true);
+
+        /*return buildMergedContextConfiguration(
+                method.getDeclaringClass(), configAttributesList, null,
+                cacheAwareContextLoaderDelegate, true, resolveContextLoader(method.getDeclaringClass(), configAttributesList),
+                getContextCustomizers(method.getDeclaringClass(), Collections.unmodifiableList(configAttributesList)));*/
+
+    }
 
 	/**
 	 * Get the {@link ContextCustomizerFactory} instances for this bootstrapper.

@@ -16,16 +16,8 @@
 
 package org.springframework.test.context.support;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextConfigurationAttributes;
@@ -34,8 +26,21 @@ import org.springframework.test.context.SmartContextLoader;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import static org.springframework.core.annotation.AnnotationUtils.*;
-import static org.springframework.test.util.MetaAnnotationUtils.*;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.springframework.core.annotation.AnnotationUtils.getAnnotation;
+import static org.springframework.core.annotation.AnnotationUtils.isAnnotationDeclaredLocally;
+import static org.springframework.test.util.MetaAnnotationUtils.AnnotationDescriptor;
+import static org.springframework.test.util.MetaAnnotationUtils.UntypedAnnotationDescriptor;
+import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptor;
+import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForTypes;
+import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorOnMethod;
 
 /**
  * Utility methods for resolving {@link ContextConfigurationAttributes} from the
@@ -247,6 +252,24 @@ abstract class ContextLoaderUtils {
 
 		return attributesList;
 	}
+
+    static List<ContextConfigurationAttributes> resolveContextConfigurationAttributesOnMethod(Method method) {
+        Assert.notNull(method, "Method must not be null");
+
+        List<ContextConfigurationAttributes> attributesList = new ArrayList<>();
+        Class<ContextConfiguration> annotationType = ContextConfiguration.class;
+
+        AnnotationDescriptor<ContextConfiguration> descriptor = findAnnotationDescriptorOnMethod(
+                method, annotationType);
+        Assert.notNull(descriptor, () -> String.format(
+                "Could not find an 'annotation declaring method' for annotation type [%s] and method [%s]",
+                annotationType.getName(), method.getName()));
+
+        convertContextConfigToConfigAttributesAndAddToList(descriptor.synthesizeAnnotation(),
+                descriptor.getRootDeclaringClass(), attributesList);
+
+        return attributesList;
+    }
 
 	/**
 	 * Convenience method for creating a {@link ContextConfigurationAttributes}

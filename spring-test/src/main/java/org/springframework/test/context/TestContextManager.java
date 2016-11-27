@@ -16,18 +16,20 @@
 
 package org.springframework.test.context;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.test.util.MetaAnnotationUtils;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.ReflectionUtils;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.ReflectionUtils;
+import static org.springframework.test.context.support.DependencyInjectionTestExecutionListener.REINJECT_DEPENDENCIES_ATTRIBUTE;
 
 /**
  * {@code TestContextManager} is the main entry point into the <em>Spring
@@ -281,11 +283,12 @@ public class TestContextManager {
 	 */
 	public void beforeTestMethod(Object testInstance, Method testMethod) throws Exception {
 		String callbackName = "beforeTestMethod";
-		prepareForBeforeCallback(callbackName, testInstance, testMethod);
+        prepareForBeforeCallback(callbackName, testInstance, testMethod);
+        TestContext preparedContext = prepareTestContext(getTestContext());
 
 		for (TestExecutionListener testExecutionListener : getTestExecutionListeners()) {
 			try {
-				testExecutionListener.beforeTestMethod(getTestContext());
+				testExecutionListener.beforeTestMethod(preparedContext);
 			}
 			catch (Throwable ex) {
 				handleBeforeException(ex, callbackName, testExecutionListener, testInstance, testMethod);
@@ -293,7 +296,28 @@ public class TestContextManager {
 		}
 	}
 
-	/**
+    private TestContext prepareTestContext(TestContext testContext) {
+        Method testMethod = testContext.getTestMethod();
+        if (testMethod != null) {
+            MetaAnnotationUtils.AnnotationDescriptor<ContextConfiguration> contextConfigurationDescriptor
+                    = MetaAnnotationUtils.findAnnotationDescriptorOnMethod(
+                    testMethod, ContextConfiguration.class);
+
+            if (contextConfigurationDescriptor != null) {
+                TestContextBootstrapper bootstrapper = BootstrapUtils.resolveTestContextBootstrapper(
+                        BootstrapUtils.createBootstrapContext(testContext.getTestClass()));
+
+                TestContext context = bootstrapper.buildTestContext(testMethod);
+                context.updateState(testContext.getTestInstance(), testMethod, null);
+                context.setAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
+                return context;
+            }
+        }
+
+        return testContext;
+    }
+
+    /**
 	 * Hook for pre-processing a test <em>immediately before</em> execution of
 	 * the {@linkplain java.lang.reflect.Method test method} in the supplied
 	 * {@linkplain TestContext test context} &mdash; for example, for timing

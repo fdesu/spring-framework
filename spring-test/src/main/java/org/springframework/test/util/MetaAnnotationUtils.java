@@ -16,16 +16,18 @@
 
 package org.springframework.test.util;
 
-import java.lang.annotation.Annotation;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.ReflectionUtils;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * {@code MetaAnnotationUtils} is a collection of utility methods that complements
@@ -133,6 +135,34 @@ public abstract class MetaAnnotationUtils {
 		// Declared on a superclass?
 		return findAnnotationDescriptor(clazz.getSuperclass(), visited, annotationType);
 	}
+
+    private static <T extends Annotation> AnnotationDescriptor<T> findAnnotationDescriptorOnMethod(
+            Method method, Class<?> declaringClass, Set<Annotation> visited, Class<T> annotationType) {
+        Assert.notNull(annotationType, "Annotation type must not be null");
+        if (declaringClass == null || Object.class == declaringClass) {
+            return null;
+        }
+
+        Method foundMethod = ReflectionUtils.findMethod(declaringClass, method.getName(), method.getParameterTypes());
+
+        if (foundMethod == null) {
+            return null;
+        }
+
+        T annotation = AnnotationUtils.findAnnotation(foundMethod, annotationType);
+        if (annotation != null) {
+            return new MethodLevelAnnotationDescriptor<>(foundMethod, annotation);
+        }
+
+        // Declared on a superclass?
+        return findAnnotationDescriptorOnMethod(foundMethod, foundMethod.getDeclaringClass().getSuperclass(),
+                visited, annotationType);
+    }
+
+    public static <T extends Annotation> AnnotationDescriptor<T> findAnnotationDescriptorOnMethod(
+            Method method, Class<T> annotationType) {
+        return findAnnotationDescriptorOnMethod(method, method.getDeclaringClass(), new HashSet<>(), annotationType);
+    }
 
 	/**
 	 * Find the {@link UntypedAnnotationDescriptor} for the first {@link Class}
@@ -362,6 +392,28 @@ public abstract class MetaAnnotationUtils {
 		}
 	}
 
+	public static class MethodLevelAnnotationDescriptor<T extends Annotation> extends AnnotationDescriptor<T> {
+        private final Method method;
+
+        public MethodLevelAnnotationDescriptor(Method method, T annotation) {
+            super(method.getDeclaringClass(), annotation);
+            this.method = method;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public T synthesizeAnnotation() {
+            return AnnotationUtils.synthesizeAnnotation(
+                    getAnnotationAttributes(), (Class<T>) getAnnotationType(), method);
+        }
+
+        @Override
+        public AnnotationAttributes getAnnotationAttributes() {
+            return AnnotatedElementUtils.findMergedAnnotationAttributes(
+                    method, getAnnotationType().getName(), false, false);
+        }
+
+    }
 
 	/**
 	 * <em>Untyped</em> extension of {@code AnnotationDescriptor} that is used
