@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.springframework.core.annotation.AnnotationUtils.findAnnotation;
 import static org.springframework.core.annotation.AnnotationUtils.getAnnotation;
 import static org.springframework.core.annotation.AnnotationUtils.isAnnotationDeclaredLocally;
 import static org.springframework.test.util.MetaAnnotationUtils.AnnotationDescriptor;
@@ -172,17 +171,16 @@ abstract class ContextLoaderUtils {
                 "Could not find an 'annotation declaring class' for annotation type [%s] or [%s] and test method [%s]",
                 contextConfigType.getName(), contextHierarchyType.getName(), method.getName()));
 
-        while (desc != null) {
-            //Class<?> rootDeclaringClass = desc.getRootDeclaringClass();
-            //Class<?> declaringClass = desc.getDeclaringClass();
+        Method superMethod = method;
 
-            boolean contextConfigDeclaredLocally = findAnnotation(method, contextConfigType) != null;
-            boolean contextHierarchyDeclaredLocally = findAnnotation(method, contextHierarchyType) != null;
+        while (desc != null) {
+            boolean contextConfigDeclaredLocally = getAnnotation(superMethod, contextConfigType) != null;
+            boolean contextHierarchyDeclaredLocally = getAnnotation(superMethod, contextHierarchyType) != null;
 
             if (contextConfigDeclaredLocally && contextHierarchyDeclaredLocally) {
                 String msg = String.format("Method [%s] has been configured with both @ContextConfiguration " +
                         "and @ContextHierarchy. Only one of these annotations may be declared on a test class " +
-                        "or composed annotation.", method.getName());
+                        "or composed annotation.", superMethod.getName());
                 logger.error(msg);
                 throw new IllegalStateException(msg);
             }
@@ -193,19 +191,19 @@ abstract class ContextLoaderUtils {
                 ContextConfiguration contextConfiguration = AnnotationUtils.synthesizeAnnotation(
                         desc.getAnnotationAttributes(), ContextConfiguration.class, desc.getRootDeclaringClass());
                 convertContextConfigToConfigAttributesAndAddToList(
-                        contextConfiguration, method.getDeclaringClass(), configAttributesList);
+                        contextConfiguration, superMethod.getDeclaringClass(), configAttributesList);
             } else if (contextHierarchyDeclaredLocally) {
-                ContextHierarchy contextHierarchy = getAnnotation(method, contextHierarchyType);
+                ContextHierarchy contextHierarchy = getAnnotation(superMethod, contextHierarchyType);
                 for (ContextConfiguration contextConfiguration : contextHierarchy.value()) {
                     convertContextConfigToConfigAttributesAndAddToList(
-                            contextConfiguration, method.getDeclaringClass(), configAttributesList);
+                            contextConfiguration, superMethod.getDeclaringClass(), configAttributesList);
                 }
             }
 
             hierarchyAttributes.add(0, configAttributesList);
 
-            Class<?> superclass = method.getDeclaringClass().getSuperclass();
-            Method superMethod = ReflectionUtils.findMethod(superclass, method.getName(), method.getParameterTypes());
+            Class<?> superclass = superMethod.getDeclaringClass().getSuperclass();
+            superMethod = ReflectionUtils.findMethod(superclass, superMethod.getName(), superMethod.getParameterTypes());
 
             if (superMethod == null) {
                 break;

@@ -11,7 +11,7 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = ContextConfigurationOnMethodTest.TypeContext.class)
-public class ContextConfigurationOnMethodTest extends Parent {
+public class ContextConfigurationOnMethodTest extends ContextConfigurationOnMethodParent {
 
     @Autowired
     private String bean;
@@ -23,6 +23,7 @@ public class ContextConfigurationOnMethodTest extends Parent {
     }
 
     @Test
+    @Override
     public void shouldPickUpParentBean() {
         assertEquals("parent", bean);
     }
@@ -49,7 +50,7 @@ public class ContextConfigurationOnMethodTest extends Parent {
 
 }
 
-class Parent {
+class ContextConfigurationOnMethodParent {
 
     @ContextConfiguration(classes = ParentConfig.class)
     public void shouldPickUpParentBean() {

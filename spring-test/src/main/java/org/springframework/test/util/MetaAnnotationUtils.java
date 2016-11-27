@@ -189,7 +189,7 @@ public abstract class MetaAnnotationUtils {
 
         // Declared locally?
         for (Class<? extends Annotation> annotationType : annotationTypes) {
-            Annotation annotation = AnnotationUtils.findAnnotation(superMethod, annotationType);
+            Annotation annotation = AnnotationUtils.getAnnotation(superMethod, annotationType);
             if (annotation != null) {
                 return new MethodUntypedAnnotationDescriptor(superMethod, annotation);
             }

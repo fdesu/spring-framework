@@ -16,7 +16,7 @@ import static org.junit.Assert.assertNull;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = ContextHierarchyOnMethodTest.MainContext.class)
-public class ContextHierarchyOnMethodTest {
+public class ContextHierarchyOnMethodTest extends ContextHierarchyOnMethodParent {
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -43,11 +43,17 @@ public class ContextHierarchyOnMethodTest {
     }
 
     @Test
+    @Override
+    public void shouldLoadContextsInStraightOrderFromParent() {
+        assertEquals("second", testBean);
+    }
+
+    @Test
     @ContextHierarchy({
             @ContextConfiguration(classes = FirstContext.class),
             @ContextConfiguration(classes = SecondContext.class)
     })
-    public void shouldCreateProperierarchy() {
+    public void shouldCreateProperHierarchy() {
         assertNotNull("child ApplicationContext", applicationContext);
         assertNotNull("parent ApplicationContext", applicationContext.getParent());
         assertNull("grandparent ApplicationContext", applicationContext.getParent().getParent());
@@ -74,4 +80,14 @@ public class ContextHierarchyOnMethodTest {
         }
     }
 
+}
+
+class ContextHierarchyOnMethodParent {
+
+    @ContextHierarchy({
+            @ContextConfiguration(classes = ContextHierarchyOnMethodTest.FirstContext.class),
+            @ContextConfiguration(classes = ContextHierarchyOnMethodTest.SecondContext.class)
+    })
+    public void shouldLoadContextsInStraightOrderFromParent() {
+    }
 }
