@@ -41,7 +41,7 @@ import static org.springframework.test.util.MetaAnnotationUtils.AnnotationDescri
 import static org.springframework.test.util.MetaAnnotationUtils.UntypedAnnotationDescriptor;
 import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptor;
 import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForTypes;
-import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorOnMethod;
+import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForMethod;
 import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorsForMethod;
 
 /**
@@ -354,7 +354,7 @@ abstract class ContextLoaderUtils {
         List<ContextConfigurationAttributes> attributesList = new ArrayList<>();
         Class<ContextConfiguration> annotationType = ContextConfiguration.class;
 
-        AnnotationDescriptor<ContextConfiguration> descriptor = findAnnotationDescriptorOnMethod(
+        AnnotationDescriptor<ContextConfiguration> descriptor = findAnnotationDescriptorForMethod(
                 method, annotationType);
         Assert.notNull(descriptor, () -> String.format(
                 "Could not find an 'annotation declaring method' for annotation type [%s] and method [%s]",
