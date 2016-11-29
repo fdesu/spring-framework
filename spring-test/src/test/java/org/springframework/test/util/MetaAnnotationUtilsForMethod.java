@@ -654,6 +654,7 @@ public class MetaAnnotationUtilsForMethod {
 
     static class MetaAnnotatedAndSuperAnnotatedContextConfigClass extends AnnotatedContextConfigClass {
         @MetaAnnotationUtilsTests.MetaConfig(classes = String.class)
+        @Override
         public void something(){}
     }
 
