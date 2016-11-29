@@ -431,7 +431,7 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
     public final MergedContextConfiguration buildMergedContextConfiguration(Method method) {
         CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate = getCacheAwareContextLoaderDelegate();
 
-        if (MetaAnnotationUtils.findAnnotationDescriptorsForMethod(
+        if (MetaAnnotationUtils.findAnnotationDescriptorForTypes(
                 method, ContextConfiguration.class, ContextHierarchy.class) == null) {
             return buildDefaultMergedContextConfiguration(getBootstrapContext().getTestClass(),
                     cacheAwareContextLoaderDelegate);

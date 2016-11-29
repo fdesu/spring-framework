@@ -300,7 +300,7 @@ public class TestContextManager {
         Method testMethod = testContext.getTestMethod();
         if (testMethod != null) {
             MetaAnnotationUtils.UntypedAnnotationDescriptor descriptor
-                    = MetaAnnotationUtils.findAnnotationDescriptorsForMethod(
+                    = MetaAnnotationUtils.findAnnotationDescriptorForTypes(
                     testMethod, ContextConfiguration.class, ContextHierarchy.class);
 
             if (descriptor != null) {

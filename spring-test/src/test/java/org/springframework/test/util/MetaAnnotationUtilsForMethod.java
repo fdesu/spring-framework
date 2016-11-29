@@ -15,8 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.springframework.core.annotation.AnnotationUtils.findAnnotation;
-import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForMethod;
-import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorsForMethod;
+import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptor;
+import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForTypes;
 
 public class MetaAnnotationUtilsForMethod {
 
@@ -32,7 +32,7 @@ public class MetaAnnotationUtilsForMethod {
 
     private void assertAtComponentOnComposedAnnotation(Method method, Class<?> rootDeclaringClass,
                                                        Class<?> declaringClass, String name, Class<? extends Annotation> composedAnnotationType) {
-        MetaAnnotationUtils.AnnotationDescriptor<Component> descriptor = findAnnotationDescriptorForMethod(method, Component.class);
+        MetaAnnotationUtils.AnnotationDescriptor<Component> descriptor = findAnnotationDescriptor(method, Component.class);
         assertNotNull("AnnotationDescriptor should not be null", descriptor);
         assertEquals("rootDeclaringClass", rootDeclaringClass, descriptor.getRootDeclaringClass());
         assertEquals("declaringClass", declaringClass, descriptor.getDeclaringClass());
@@ -44,9 +44,9 @@ public class MetaAnnotationUtilsForMethod {
 
     @Test
     public void findAnnotationDescriptorWithNoAnnotationPresent() throws Exception {
-        assertNull(findAnnotationDescriptorForMethod(
+        assertNull(findAnnotationDescriptor(
                 NonAnnotatedInterface.class.getMethod("something"), Transactional.class));
-        assertNull(findAnnotationDescriptorForMethod(
+        assertNull(findAnnotationDescriptor(
                 NonAnnotatedClass.class.getMethod("something"), Transactional.class));
     }
 
@@ -55,18 +55,18 @@ public class MetaAnnotationUtilsForMethod {
         // Note: @Transactional is inherited
         Method inheritedAnnotationMethod = InheritedAnnotationClass.class.getMethod("something");
 
-        assertEquals(InheritedAnnotationClass.class, findAnnotationDescriptorForMethod(
+        assertEquals(InheritedAnnotationClass.class, findAnnotationDescriptor(
                 inheritedAnnotationMethod,Transactional.class).getRootDeclaringClass());
-        assertEquals(InheritedAnnotationClass.class, findAnnotationDescriptorForMethod(
+        assertEquals(InheritedAnnotationClass.class, findAnnotationDescriptor(
                 inheritedAnnotationMethod,Transactional.class).getDeclaringClass());
-        assertEquals(inheritedAnnotationMethod, findAnnotationDescriptorForMethod(
+        assertEquals(inheritedAnnotationMethod, findAnnotationDescriptor(
                 inheritedAnnotationMethod,Transactional.class).getDeclaredMethod());
 
-        assertEquals(SubInheritedAnnotationClass.class, findAnnotationDescriptorForMethod(
+        assertEquals(SubInheritedAnnotationClass.class, findAnnotationDescriptor(
                 SubInheritedAnnotationClass.class.getMethod("something"), Transactional.class).getRootDeclaringClass());
-        assertEquals(InheritedAnnotationClass.class, findAnnotationDescriptorForMethod(
+        assertEquals(InheritedAnnotationClass.class, findAnnotationDescriptor(
                 SubInheritedAnnotationClass.class.getMethod("something"), Transactional.class).getDeclaringClass());
-        assertEquals(inheritedAnnotationMethod, findAnnotationDescriptorForMethod(
+        assertEquals(inheritedAnnotationMethod, findAnnotationDescriptor(
                 SubInheritedAnnotationClass.class.getMethod("something"), Transactional.class).getDeclaredMethod());
     }
 
@@ -77,9 +77,9 @@ public class MetaAnnotationUtilsForMethod {
 
         Transactional rawAnnotation = something.getAnnotation(Transactional.class);
 
-        MetaAnnotationUtils.AnnotationMethodDescriptor<Transactional> descriptor;
+        MetaAnnotationUtils.AnnotationOnMethodDescriptor<Transactional> descriptor;
 
-        descriptor = findAnnotationDescriptorForMethod(something, Transactional.class);
+        descriptor = findAnnotationDescriptor(something, Transactional.class);
         assertNotNull(descriptor);
         assertEquals(InheritedAnnotationInterface.class, descriptor.getRootDeclaringClass());
         assertEquals(InheritedAnnotationInterface.class, descriptor.getDeclaringClass());
@@ -87,7 +87,7 @@ public class MetaAnnotationUtilsForMethod {
         assertEquals(rawAnnotation, descriptor.getAnnotation());
 
         Method somethingInSubInherited = SubInheritedAnnotationInterface.class.getMethod("something");
-        descriptor = findAnnotationDescriptorForMethod(somethingInSubInherited, Transactional.class);
+        descriptor = findAnnotationDescriptor(somethingInSubInherited, Transactional.class);
         assertNotNull(descriptor);
         assertEquals(SubInheritedAnnotationInterface.class, descriptor.getRootDeclaringClass());
         assertEquals(InheritedAnnotationInterface.class, descriptor.getDeclaringClass());
@@ -95,7 +95,7 @@ public class MetaAnnotationUtilsForMethod {
         assertEquals(rawAnnotation, descriptor.getAnnotation());
 
         Method somethingInSubSubInherited = SubSubInheritedAnnotationInterface.class.getMethod("something");
-        descriptor = findAnnotationDescriptorForMethod(somethingInSubSubInherited, Transactional.class);
+        descriptor = findAnnotationDescriptor(somethingInSubSubInherited, Transactional.class);
         assertNotNull(descriptor);
         assertEquals(SubSubInheritedAnnotationInterface.class, descriptor.getRootDeclaringClass());
         assertEquals(InheritedAnnotationInterface.class, descriptor.getDeclaringClass());
@@ -106,12 +106,12 @@ public class MetaAnnotationUtilsForMethod {
     @Test
     public void findAnnotationDescriptorForNonInheritedAnnotationOnClass() throws Exception {
         // Note: @Order is not inherited.
-        MetaAnnotationUtils.AnnotationMethodDescriptor<Order> something = findAnnotationDescriptorForMethod(
+        MetaAnnotationUtils.AnnotationOnMethodDescriptor<Order> something = findAnnotationDescriptor(
                 NonInheritedAnnotationClass.class.getMethod("something"), Order.class);
         assertEquals(NonInheritedAnnotationClass.class, something.getRootDeclaringClass());
         assertEquals(NonInheritedAnnotationClass.class.getMethod("something"), something.getDeclaredMethod());
 
-        MetaAnnotationUtils.AnnotationMethodDescriptor<Order> somethingOnSub = findAnnotationDescriptorForMethod(
+        MetaAnnotationUtils.AnnotationOnMethodDescriptor<Order> somethingOnSub = findAnnotationDescriptor(
                 SubNonInheritedAnnotationClass.class.getMethod("something"), Order.class);
         assertEquals(SubNonInheritedAnnotationClass.class, somethingOnSub.getRootDeclaringClass());
         assertEquals(NonInheritedAnnotationClass.class.getMethod("something"), somethingOnSub.getDeclaredMethod());
@@ -122,16 +122,16 @@ public class MetaAnnotationUtilsForMethod {
         // Note: @Order is not inherited.
         Order rawAnnotation = NonInheritedAnnotationInterface.class.getMethod("something").getAnnotation(Order.class);
 
-        MetaAnnotationUtils.AnnotationMethodDescriptor<Order> descriptor;
+        MetaAnnotationUtils.AnnotationOnMethodDescriptor<Order> descriptor;
 
-        descriptor = findAnnotationDescriptorForMethod(NonInheritedAnnotationInterface.class.getMethod("something"), Order.class);
+        descriptor = findAnnotationDescriptor(NonInheritedAnnotationInterface.class.getMethod("something"), Order.class);
         assertNotNull(descriptor);
         assertEquals(NonInheritedAnnotationInterface.class, descriptor.getRootDeclaringClass());
         assertEquals(NonInheritedAnnotationInterface.class, descriptor.getDeclaringClass());
         assertEquals(NonInheritedAnnotationInterface.class.getDeclaredMethod("something"), descriptor.getDeclaredMethod());
         assertEquals(rawAnnotation, descriptor.getAnnotation());
 
-        descriptor = findAnnotationDescriptorForMethod(SubNonInheritedAnnotationInterface.class.getMethod("something"), Order.class);
+        descriptor = findAnnotationDescriptor(SubNonInheritedAnnotationInterface.class.getMethod("something"), Order.class);
         assertNotNull(descriptor);
         assertEquals(SubNonInheritedAnnotationInterface.class, descriptor.getRootDeclaringClass());
         assertEquals(NonInheritedAnnotationInterface.class, descriptor.getDeclaringClass());
@@ -149,7 +149,7 @@ public class MetaAnnotationUtilsForMethod {
     public void findAnnotationDescriptorWithLocalAndMetaComponentAnnotation() throws Exception {
         Class<Transactional> annotationType = Transactional.class;
         Method something = HasLocalAndMetaComponentAnnotation.class.getDeclaredMethod("something");
-        MetaAnnotationUtils.AnnotationMethodDescriptor<Transactional> descriptor = findAnnotationDescriptorForMethod(
+        MetaAnnotationUtils.AnnotationOnMethodDescriptor<Transactional> descriptor = findAnnotationDescriptor(
                 something, annotationType);
 
         assertEquals(HasLocalAndMetaComponentAnnotation.class, descriptor.getRootDeclaringClass());
@@ -170,9 +170,9 @@ public class MetaAnnotationUtilsForMethod {
         Method something = ClassWithMetaAnnotatedInterface.class.getMethod("something");
         Component rawAnnotation = findAnnotation(something, Component.class);
 
-        MetaAnnotationUtils.AnnotationMethodDescriptor<Component> descriptor;
+        MetaAnnotationUtils.AnnotationOnMethodDescriptor<Component> descriptor;
 
-        descriptor = findAnnotationDescriptorForMethod(something, Component.class);
+        descriptor = findAnnotationDescriptor(something, Component.class);
         assertNotNull(descriptor);
         assertEquals(ClassWithMetaAnnotatedInterface.class, descriptor.getRootDeclaringClass());
         assertEquals(MetaAnnotationUtilsTests.Meta1.class, descriptor.getDeclaringClass());
@@ -184,7 +184,7 @@ public class MetaAnnotationUtilsForMethod {
     @Test
     public void findAnnotationDescriptorForClassWithLocalMetaAnnotationAndAnnotatedSuperclass() throws Exception {
         Method something = MetaAnnotatedAndSuperAnnotatedContextConfigClass.class.getDeclaredMethod("something");
-        MetaAnnotationUtils.AnnotationMethodDescriptor<ContextConfiguration> descriptor = findAnnotationDescriptorForMethod(
+        MetaAnnotationUtils.AnnotationOnMethodDescriptor<ContextConfiguration> descriptor = findAnnotationDescriptor(
                 something, ContextConfiguration.class);
 
         assertNotNull("AnnotationDescriptor should not be null", descriptor);
@@ -234,7 +234,7 @@ public class MetaAnnotationUtilsForMethod {
     public void findAnnotationDescriptorOnAnnotatedClassWithMissingTargetMetaAnnotation() throws Exception {
         // InheritedAnnotationClass is NOT annotated or meta-annotated with @Component
         MetaAnnotationUtils.AnnotationDescriptor<Component>
-                descriptor = findAnnotationDescriptorForMethod(
+                descriptor = findAnnotationDescriptor(
                         InheritedAnnotationClass.class.getDeclaredMethod("something"), Component.class);
         assertNull("Should not find @Component on InheritedAnnotationClass", descriptor);
     }
@@ -242,7 +242,7 @@ public class MetaAnnotationUtilsForMethod {
     @Test
     public void findAnnotationDescriptorOnMetaCycleAnnotatedClassWithMissingTargetMetaAnnotation() throws Exception {
         MetaAnnotationUtils.AnnotationDescriptor<Component>
-                descriptor = findAnnotationDescriptorForMethod(
+                descriptor = findAnnotationDescriptor(
                         MetaCycleAnnotatedClass.class.getDeclaredMethod("something"), Component.class);
         assertNull("Should not find @Component on MetaCycleAnnotatedClass", descriptor);
     }
@@ -252,9 +252,9 @@ public class MetaAnnotationUtilsForMethod {
     @Test
     @SuppressWarnings("unchecked")
     public void findAnnotationDescriptorForTypesWithNoAnnotationPresent() throws Exception {
-        assertNull(findAnnotationDescriptorsForMethod(NonAnnotatedInterface.class.getDeclaredMethod("something"),
+        assertNull(findAnnotationDescriptorForTypes(NonAnnotatedInterface.class.getDeclaredMethod("something"),
                 Transactional.class, Component.class));
-        assertNull(findAnnotationDescriptorsForMethod(NonAnnotatedClass.class.getDeclaredMethod("something"),
+        assertNull(findAnnotationDescriptorForTypes(NonAnnotatedClass.class.getDeclaredMethod("something"),
                 Transactional.class, Order.class));
     }
 
@@ -262,13 +262,13 @@ public class MetaAnnotationUtilsForMethod {
     @SuppressWarnings("unchecked")
     public void findAnnotationDescriptorForTypesWithInheritedAnnotationOnClass() throws Exception {
         // Note: @Transactional is inherited
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor something = findAnnotationDescriptorsForMethod(
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor something = findAnnotationDescriptorForTypes(
                 InheritedAnnotationClass.class.getDeclaredMethod("something"), Transactional.class);
         assertEquals(InheritedAnnotationClass.class, something.getRootDeclaringClass());
         assertEquals(InheritedAnnotationClass.class, something.getDeclaringClass());
         assertEquals(InheritedAnnotationClass.class.getDeclaredMethod("something"), something.getDeclaringMethod());
 
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor somethingOnSub = findAnnotationDescriptorsForMethod(
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor somethingOnSub = findAnnotationDescriptorForTypes(
                 SubInheritedAnnotationClass.class.getDeclaredMethod("something"), Transactional.class);
         assertEquals(InheritedAnnotationClass.class, somethingOnSub.getDeclaringClass());
         assertEquals(SubInheritedAnnotationClass.class, somethingOnSub.getRootDeclaringClass());
@@ -282,9 +282,9 @@ public class MetaAnnotationUtilsForMethod {
         Transactional rawAnnotation = InheritedAnnotationInterface.class.getDeclaredMethod("something")
                 .getAnnotation(Transactional.class);
 
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor descriptor;
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor descriptor;
 
-        descriptor = findAnnotationDescriptorsForMethod(InheritedAnnotationInterface.class.getDeclaredMethod("something"),
+        descriptor = findAnnotationDescriptorForTypes(InheritedAnnotationInterface.class.getDeclaredMethod("something"),
                 Transactional.class);
         assertNotNull(descriptor);
         assertEquals(InheritedAnnotationInterface.class, descriptor.getRootDeclaringClass());
@@ -292,7 +292,7 @@ public class MetaAnnotationUtilsForMethod {
         assertEquals(InheritedAnnotationInterface.class.getDeclaredMethod("something"), descriptor.getDeclaringMethod());
         assertEquals(rawAnnotation, descriptor.getAnnotation());
 
-        descriptor = findAnnotationDescriptorsForMethod(SubInheritedAnnotationInterface.class.getDeclaredMethod("something"),
+        descriptor = findAnnotationDescriptorForTypes(SubInheritedAnnotationInterface.class.getDeclaredMethod("something"),
                 Transactional.class);
         assertNotNull(descriptor);
         assertEquals(SubInheritedAnnotationInterface.class, descriptor.getRootDeclaringClass());
@@ -300,7 +300,7 @@ public class MetaAnnotationUtilsForMethod {
         assertEquals(InheritedAnnotationInterface.class.getDeclaredMethod("something"), descriptor.getDeclaringMethod());
         assertEquals(rawAnnotation, descriptor.getAnnotation());
 
-        descriptor = findAnnotationDescriptorsForMethod(SubSubInheritedAnnotationInterface.class.getDeclaredMethod("something"),
+        descriptor = findAnnotationDescriptorForTypes(SubSubInheritedAnnotationInterface.class.getDeclaredMethod("something"),
                 Transactional.class);
         assertNotNull(descriptor);
         assertEquals(SubSubInheritedAnnotationInterface.class, descriptor.getRootDeclaringClass());
@@ -313,14 +313,14 @@ public class MetaAnnotationUtilsForMethod {
     @SuppressWarnings("unchecked")
     public void findAnnotationDescriptorForTypesForNonInheritedAnnotationOnClass() throws Exception {
         // Note: @Order is not inherited.
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor something = findAnnotationDescriptorsForMethod(
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor something = findAnnotationDescriptorForTypes(
                 NonInheritedAnnotationClass.class.getDeclaredMethod("something"), Order.class);
         assertEquals(NonInheritedAnnotationClass.class, something.getRootDeclaringClass());
         assertEquals(NonInheritedAnnotationClass.class, something.getDeclaringClass());
         assertEquals(NonInheritedAnnotationClass.class.getDeclaredMethod("something"), something.getDeclaringMethod());
 
 
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor somethingOnSub = findAnnotationDescriptorsForMethod(
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor somethingOnSub = findAnnotationDescriptorForTypes(
                 SubNonInheritedAnnotationClass.class.getDeclaredMethod("something"), Order.class);
         assertEquals(SubNonInheritedAnnotationClass.class, somethingOnSub.getRootDeclaringClass());
         assertEquals(NonInheritedAnnotationClass.class, somethingOnSub.getDeclaringClass());
@@ -333,9 +333,9 @@ public class MetaAnnotationUtilsForMethod {
         // Note: @Order is not inherited.
         Order rawAnnotation = NonInheritedAnnotationInterface.class.getDeclaredMethod("something").getAnnotation(Order.class);
 
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor descriptor;
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor descriptor;
 
-        descriptor = findAnnotationDescriptorsForMethod(
+        descriptor = findAnnotationDescriptorForTypes(
                 NonInheritedAnnotationInterface.class.getDeclaredMethod("something"), Order.class);
         assertNotNull(descriptor);
         assertEquals(NonInheritedAnnotationInterface.class, descriptor.getRootDeclaringClass());
@@ -343,7 +343,7 @@ public class MetaAnnotationUtilsForMethod {
         assertEquals(NonInheritedAnnotationInterface.class.getDeclaredMethod("something"), descriptor.getDeclaringMethod());
         assertEquals(rawAnnotation, descriptor.getAnnotation());
 
-        descriptor = findAnnotationDescriptorsForMethod(
+        descriptor = findAnnotationDescriptorForTypes(
                 SubNonInheritedAnnotationInterface.class.getDeclaredMethod("something"), Order.class);
         assertNotNull(descriptor);
         assertEquals(SubNonInheritedAnnotationInterface.class, descriptor.getRootDeclaringClass());
@@ -355,9 +355,9 @@ public class MetaAnnotationUtilsForMethod {
     @Test
     @SuppressWarnings("unchecked")
     public void findAnnotationDescriptorForTypesWithLocalAndMetaComponentAnnotation() throws Exception {
-        Class<Component> annotationType = Component.class;
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor descriptor = findAnnotationDescriptorsForMethod(
-                HasLocalAndMetaComponentAnnotation.class.getDeclaredMethod("something"), Transactional.class,
+        Class<Transactional> annotationType = Transactional.class;
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor descriptor = findAnnotationDescriptorForTypes(
+                HasLocalAndMetaComponentAnnotation.class.getDeclaredMethod("something"), Component.class,
                 annotationType, Order.class);
 
         assertEquals(HasLocalAndMetaComponentAnnotation.class, descriptor.getRootDeclaringClass());
@@ -375,22 +375,22 @@ public class MetaAnnotationUtilsForMethod {
 
     private void assertAtComponentOnComposedAnnotationForMultipleCandidateTypes(Method method,
                                                                                 Class<?> rootDeclaringClass, String name, Class<? extends Annotation> composedAnnotationType) {
-        assertAtComponentOnComposedAnnotationForMultipleCandidateTypes(method, rootDeclaringClass,
+        assertAtComponentOnComposedAnnotationForMultipleCandidateTypes(method, method, rootDeclaringClass,
                 composedAnnotationType, name, composedAnnotationType);
     }
 
     @SuppressWarnings("unchecked")
-    private void assertAtComponentOnComposedAnnotationForMultipleCandidateTypes(Method method,
+    private void assertAtComponentOnComposedAnnotationForMultipleCandidateTypes(Method startMethod, Method expectedMethod,
                                                                                 Class<?> rootDeclaringClass, Class<?> declaringClass, String name,
                                                                                 Class<? extends Annotation> composedAnnotationType) {
         Class<Component> annotationType = Component.class;
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor descriptor = findAnnotationDescriptorsForMethod(
-                method, Service.class,
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor descriptor = findAnnotationDescriptorForTypes(
+                startMethod, Service.class,
                 annotationType, Order.class, Transactional.class);
         assertNotNull("UntypedAnnotationMethodDescriptor should not be null", descriptor);
         assertEquals("rootDeclaringClass", rootDeclaringClass, descriptor.getRootDeclaringClass());
         assertEquals("declaringClass", declaringClass, descriptor.getDeclaringClass());
-        assertEquals("declaringClass", method, descriptor.getDeclaringMethod());
+        assertEquals("declaringMethod", expectedMethod, descriptor.getDeclaringMethod());
         assertEquals("annotationType", annotationType, descriptor.getAnnotationType());
         assertEquals("component name", name, ((Component) descriptor.getAnnotation()).value());
         assertNotNull("composedAnnotation should not be null", descriptor.getComposedAnnotation());
@@ -410,7 +410,7 @@ public class MetaAnnotationUtilsForMethod {
         Class<?> startClass = MetaConfigWithDefaultAttributesTestCase.class;
         Class<ContextConfiguration> annotationType = ContextConfiguration.class;
 
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor descriptor = findAnnotationDescriptorsForMethod(
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor descriptor = findAnnotationDescriptorForTypes(
                 startClass.getDeclaredMethod("something"), Service.class,
                 ContextConfiguration.class, Order.class, Transactional.class);
 
@@ -420,8 +420,10 @@ public class MetaAnnotationUtilsForMethod {
         assertEquals(startClass.getDeclaredMethod("something"), descriptor.getDeclaringMethod());
         assertEquals(annotationType, descriptor.getAnnotationType());
         assertArrayEquals(new Class[] {}, ((ContextConfiguration) descriptor.getAnnotation()).value());
-        assertArrayEquals(new Class[] { MetaAnnotationUtilsTests.MetaConfig.DevConfig.class, MetaAnnotationUtilsTests.MetaConfig.ProductionConfig.class },
-                descriptor.getAnnotationAttributes().getClassArray("classes"));
+        assertArrayEquals(new Class[] {
+                        MetaAnnotationUtilsTests.MetaConfig.DevConfig.class,
+                        MetaAnnotationUtilsTests.MetaConfig.ProductionConfig.class
+        }, descriptor.getAnnotationAttributes().getClassArray("classes"));
         assertNotNull(descriptor.getComposedAnnotation());
         assertEquals(MetaAnnotationUtilsTests.MetaConfig.class, descriptor.getComposedAnnotationType());
     }
@@ -432,7 +434,7 @@ public class MetaAnnotationUtilsForMethod {
         Class<?> startClass = MetaConfigWithOverriddenAttributesTestCase.class;
         Class<ContextConfiguration> annotationType = ContextConfiguration.class;
 
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor descriptor = findAnnotationDescriptorsForMethod(
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor descriptor = findAnnotationDescriptorForTypes(
                 startClass.getDeclaredMethod("something"), Service.class,
                 ContextConfiguration.class, Order.class, Transactional.class);
 
@@ -458,12 +460,12 @@ public class MetaAnnotationUtilsForMethod {
     @Test
     @SuppressWarnings("unchecked")
     public void findAnnotationDescriptorForTypesForClassWithMetaAnnotatedInterface() throws Exception {
-        Component rawAnnotation = findAnnotation(ClassWithMetaAnnotatedInterface.class,
+        Component rawAnnotation = findAnnotation(ClassWithMetaAnnotatedInterface.class.getDeclaredMethod("something"),
                 Component.class);
 
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor descriptor;
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor descriptor;
 
-        descriptor = findAnnotationDescriptorsForMethod(
+        descriptor = findAnnotationDescriptorForTypes(
                 ClassWithMetaAnnotatedInterface.class.getDeclaredMethod("something"),
                 Service.class, Component.class, Order.class, Transactional.class);
         assertNotNull(descriptor);
@@ -485,14 +487,17 @@ public class MetaAnnotationUtilsForMethod {
     public void findAnnotationDescriptorForTypesForSubClassWithLocalMetaAnnotationAndMetaAnnotatedInterface() throws Exception {
         assertAtComponentOnComposedAnnotationForMultipleCandidateTypes(
                 SubClassWithLocalMetaAnnotationAndMetaAnnotatedInterface.class.getDeclaredMethod("something"),
-                ClassWithLocalMetaAnnotationAndMetaAnnotatedInterface.class, "meta2", MetaAnnotationUtilsTests.Meta2.class);
+                ClassWithLocalMetaAnnotationAndMetaAnnotatedInterface.class.getDeclaredMethod("something"),
+                SubClassWithLocalMetaAnnotationAndMetaAnnotatedInterface.class,
+                MetaAnnotationUtilsTests.Meta2.class, "meta2", MetaAnnotationUtilsTests.Meta2.class);
     }
 
     @Test
     public void findAnnotationDescriptorForTypesOnMetaMetaAnnotatedClass() throws Exception {
         Class<MetaMetaAnnotatedClass> startClass = MetaMetaAnnotatedClass.class;
+        Method something = startClass.getDeclaredMethod("something");
         assertAtComponentOnComposedAnnotationForMultipleCandidateTypes(
-                startClass.getDeclaredMethod("something"),
+                something, something,
                 startClass, MetaAnnotationUtilsTests.Meta2.class, "meta2",
                 MetaAnnotationUtilsTests.MetaMeta.class);
     }
@@ -500,8 +505,9 @@ public class MetaAnnotationUtilsForMethod {
     @Test
     public void findAnnotationDescriptorForTypesOnMetaMetaMetaAnnotatedClass() throws Exception {
         Class<MetaMetaMetaAnnotatedClass> startClass = MetaMetaMetaAnnotatedClass.class;
+        Method something = startClass.getDeclaredMethod("something");
         assertAtComponentOnComposedAnnotationForMultipleCandidateTypes(
-                startClass.getDeclaredMethod("something"),
+                something, something,
                 startClass, MetaAnnotationUtilsTests.Meta2.class, "meta2",
                 MetaAnnotationUtilsTests.MetaMetaMeta.class);
     }
@@ -511,8 +517,8 @@ public class MetaAnnotationUtilsForMethod {
     public void findAnnotationDescriptorForTypesOnAnnotatedClassWithMissingTargetMetaAnnotation() throws Exception {
         // InheritedAnnotationClass is NOT annotated or meta-annotated with @Component,
         // @Service, or @Order, but it is annotated with @Transactional.
-        MetaAnnotationUtils.UntypedAnnotationMethodDescriptor
-                descriptor = findAnnotationDescriptorsForMethod(InheritedAnnotationClass.class.getDeclaredMethod("something"),
+        MetaAnnotationUtils.UntypedAnnotationOnMethodDescriptor
+                descriptor = findAnnotationDescriptorForTypes(InheritedAnnotationClass.class.getDeclaredMethod("something"),
                 Service.class, Component.class, Order.class);
         assertNull("Should not find @Component on InheritedAnnotationClass", descriptor);
     }
@@ -521,7 +527,7 @@ public class MetaAnnotationUtilsForMethod {
     @SuppressWarnings("unchecked")
     public void findAnnotationDescriptorForTypesOnMetaCycleAnnotatedClassWithMissingTargetMetaAnnotation() throws Exception {
         MetaAnnotationUtils.UntypedAnnotationDescriptor
-                descriptor = findAnnotationDescriptorsForMethod(MetaCycleAnnotatedClass.class.getDeclaredMethod("something"),
+                descriptor = findAnnotationDescriptorForTypes(MetaCycleAnnotatedClass.class.getDeclaredMethod("something"),
                 Service.class, Component.class, Order.class);
         assertNull("Should not find @Component on MetaCycleAnnotatedClass", descriptor);
     }

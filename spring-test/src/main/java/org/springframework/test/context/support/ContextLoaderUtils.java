@@ -23,6 +23,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.SmartContextLoader;
+import org.springframework.test.util.MetaAnnotationUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
@@ -41,8 +42,8 @@ import static org.springframework.test.util.MetaAnnotationUtils.AnnotationDescri
 import static org.springframework.test.util.MetaAnnotationUtils.UntypedAnnotationDescriptor;
 import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptor;
 import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForTypes;
-import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForMethod;
-import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorsForMethod;
+import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptor;
+import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForTypes;
 
 /**
  * Utility methods for resolving {@link ContextConfigurationAttributes} from the
@@ -166,7 +167,7 @@ abstract class ContextLoaderUtils {
         List<List<ContextConfigurationAttributes>> hierarchyAttributes = new ArrayList<>();
 
         UntypedAnnotationDescriptor desc =
-                findAnnotationDescriptorsForMethod(method, contextConfigType, contextHierarchyType);
+                MetaAnnotationUtils.findAnnotationDescriptorForTypes(method, contextConfigType, contextHierarchyType);
         Assert.notNull(desc, () -> String.format(
                 "Could not find an 'annotation declaring class' for annotation type [%s] or [%s] and test method [%s]",
                 contextConfigType.getName(), contextHierarchyType.getName(), method.getName()));
@@ -209,7 +210,7 @@ abstract class ContextLoaderUtils {
                 break;
             }
 
-            desc = findAnnotationDescriptorsForMethod(superMethod, contextConfigType, contextHierarchyType);
+            desc = MetaAnnotationUtils.findAnnotationDescriptorForTypes(superMethod, contextConfigType, contextHierarchyType);
         }
 
         return hierarchyAttributes;
@@ -354,7 +355,7 @@ abstract class ContextLoaderUtils {
         List<ContextConfigurationAttributes> attributesList = new ArrayList<>();
         Class<ContextConfiguration> annotationType = ContextConfiguration.class;
 
-        AnnotationDescriptor<ContextConfiguration> descriptor = findAnnotationDescriptorForMethod(
+        AnnotationDescriptor<ContextConfiguration> descriptor = MetaAnnotationUtils.findAnnotationDescriptor(
                 method, annotationType);
         Assert.notNull(descriptor, () -> String.format(
                 "Could not find an 'annotation declaring method' for annotation type [%s] and method [%s]",
