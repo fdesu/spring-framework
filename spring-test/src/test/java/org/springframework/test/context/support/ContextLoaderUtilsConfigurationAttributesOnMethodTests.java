@@ -15,7 +15,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.core.CombinableMatcher.either;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.springframework.test.context.support.ContextLoaderUtils.resolveContextConfigurationAttributesOnMethod;
+import static org.springframework.test.context.support.ContextLoaderUtils.resolveContextConfigurationAttributes;
 
 public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends AbstractContextConfigurationUtilsTests  {
     @Rule
@@ -56,14 +56,14 @@ public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends Abst
                 containsString("values of [{x}] and [{y}]")).or(
                 containsString("values of [{y}] and [{x}]")));
         exception.expectMessage(containsString("but only one is permitted"));
-        resolveContextConfigurationAttributesOnMethod(ConflictingLocations.class.getDeclaredMethod("something"));
+        resolveContextConfigurationAttributes(ConflictingLocations.class.getDeclaredMethod("something"));
     }
 
     @Test
     public void resolveConfigAttributesWithBareAnnotations() throws Exception {
         Class<BareMethodAnnotations> testClass = BareMethodAnnotations.class;
         Method something = testClass.getDeclaredMethod("something");
-        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributesOnMethod(
+        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributes(
                 something);
 
         assertNotNull(attributesList);
@@ -74,7 +74,7 @@ public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends Abst
 
     @Test
     public void resolveConfigAttributesWithLocalAnnotationAndLocations() throws Exception {
-        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributesOnMethod(
+        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributes(
                 LocationsMethodFoo.class.getDeclaredMethod("something"));
 
         assertNotNull(attributesList);
@@ -86,7 +86,7 @@ public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends Abst
     public void resolveConfigAttributesWithMetaAnnotationAndLocations() throws Exception {
         Class<MetaLocationsMethodFoo> testClass = MetaLocationsMethodFoo.class;
         Method something = testClass.getDeclaredMethod("something");
-        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributesOnMethod(
+        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributes(
                 something);
 
         assertNotNull(attributesList);
@@ -99,7 +99,7 @@ public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends Abst
     public void resolveConfigAttributesWithMetaAnnotationAndLocationsAndOverrides() throws Exception {
         Class<MetaLocationsMethodFooWithOverrides> testClass = MetaLocationsMethodFooWithOverrides.class;
         Method something = testClass.getDeclaredMethod("something");
-        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributesOnMethod(
+        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributes(
                 something);
 
         assertNotNull(attributesList);
@@ -112,7 +112,7 @@ public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends Abst
     public void resolveConfigAttributesWithMetaAnnotationAndLocationsAndOverriddenAttributes() throws Exception {
         Class<MetaLocationsMethodFooWithOverriddenAttributes> testClass = MetaLocationsMethodFooWithOverriddenAttributes.class;
         Method something = testClass.getDeclaredMethod("something");
-        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributesOnMethod(
+        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributes(
                 something);
 
         assertNotNull(attributesList);
@@ -125,7 +125,7 @@ public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends Abst
     public void resolveConfigAttributesWithMetaAnnotationAndLocationsInClassHierarchy() throws Exception {
         Class<MetaLocationsMethodBar> testClass = MetaLocationsMethodBar.class;
         Method something = testClass.getDeclaredMethod("something");
-        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributesOnMethod(
+        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributes(
                 something);
 
         assertNotNull(attributesList);
@@ -139,7 +139,7 @@ public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends Abst
 
     @Test
     public void resolveConfigAttributesWithLocalAnnotationAndClasses() throws Exception {
-        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributesOnMethod(
+        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributes(
                 ClassesMethodFoo.class.getDeclaredMethod("something"));
 
         assertNotNull(attributesList);
@@ -149,7 +149,7 @@ public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends Abst
 
     @Test
     public void resolveConfigAttributesWithLocalAndInheritedAnnotationsAndLocations() throws Exception {
-        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributesOnMethod(
+        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributes(
                 LocationsMethodBar.class.getDeclaredMethod("something"));
 
         assertNotNull(attributesList);
@@ -160,7 +160,7 @@ public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends Abst
 
     @Test
     public void resolveConfigAttributesWithLocalAndInheritedAnnotationsAndClasses() throws Exception {
-        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributesOnMethod(
+        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributes(
                 ClassesMethodBar.class.getDeclaredMethod("something"));
 
         assertNotNull(attributesList);
@@ -171,7 +171,7 @@ public class ContextLoaderUtilsConfigurationAttributesOnMethodTests extends Abst
 
     @Test
     public void resolveConfigAttributesWithLocationsAndClasses() throws Exception {
-        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributesOnMethod(
+        List<ContextConfigurationAttributes> attributesList = resolveContextConfigurationAttributes(
                 LocationsAndClasses.class.getDeclaredMethod("something"));
 
         assertNotNull(attributesList);

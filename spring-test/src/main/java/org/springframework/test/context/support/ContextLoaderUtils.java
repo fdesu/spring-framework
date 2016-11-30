@@ -347,7 +347,7 @@ abstract class ContextLoaderUtils {
 		return attributesList;
 	}
 
-    static List<ContextConfigurationAttributes> resolveContextConfigurationAttributesOnMethod(Method method) {
+    static List<ContextConfigurationAttributes> resolveContextConfigurationAttributes(Method method) {
         Assert.notNull(method, "Method must not be null");
 
         List<ContextConfigurationAttributes> attributesList = new ArrayList<>();

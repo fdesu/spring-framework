@@ -462,7 +462,7 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
             return mergedConfig;
         } else {
             List<ContextConfigurationAttributes> configAttributesList
-                    = ContextLoaderUtils.resolveContextConfigurationAttributesOnMethod(method);
+                    = ContextLoaderUtils.resolveContextConfigurationAttributes(method);
 
             return buildMergedContextConfiguration(method.getDeclaringClass(),
                     configAttributesList,
