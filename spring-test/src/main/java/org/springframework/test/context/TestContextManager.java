@@ -18,7 +18,7 @@ package org.springframework.test.context;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.test.util.MetaAnnotationUtils;
+import org.springframework.test.util.MetaAnnotationUtils.UntypedAnnotationDescriptor;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.springframework.test.context.support.DependencyInjectionTestExecutionListener.REINJECT_DEPENDENCIES_ATTRIBUTE;
+import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForTypes;
 
 /**
  * {@code TestContextManager} is the main entry point into the <em>Spring
@@ -284,7 +285,7 @@ public class TestContextManager {
 	public void beforeTestMethod(Object testInstance, Method testMethod) throws Exception {
 		String callbackName = "beforeTestMethod";
         prepareForBeforeCallback(callbackName, testInstance, testMethod);
-        TestContext preparedContext = prepareTestContext(getTestContext());
+        TestContext preparedContext = prepareTestContextBeforeMethod(getTestContext());
 
 		for (TestExecutionListener testExecutionListener : getTestExecutionListeners()) {
 			try {
@@ -296,25 +297,24 @@ public class TestContextManager {
 		}
 	}
 
-    private TestContext prepareTestContext(TestContext testContext) {
-        Method testMethod = testContext.getTestMethod();
+    protected TestContext prepareTestContextBeforeMethod(TestContext originalTestContext) {
+        Method testMethod = originalTestContext.getTestMethod();
         if (testMethod != null) {
-            MetaAnnotationUtils.UntypedAnnotationDescriptor descriptor
-                    = MetaAnnotationUtils.findAnnotationDescriptorForTypes(
-                    testMethod, ContextConfiguration.class, ContextHierarchy.class);
-
+            UntypedAnnotationDescriptor descriptor = findAnnotationDescriptorForTypes(testMethod,
+                    ContextConfiguration.class, ContextHierarchy.class);
             if (descriptor != null) {
-                TestContextBootstrapper bootstrapper = BootstrapUtils.resolveTestContextBootstrapper(testMethod);
-
-                TestContext context = bootstrapper.buildTestContext();
-                context.updateState(testContext.getTestInstance(), testMethod, null);
-                context.setAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
-                testContext.setAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
-                return context;
+                originalTestContext.setAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
+                return createThrowAwayContext(testMethod, originalTestContext);
             }
         }
+        return originalTestContext;
+    }
 
-        return testContext;
+    protected TestContext createThrowAwayContext(Method testMethod, TestContext originalContext) {
+        TestContext throwAwayContext = BootstrapUtils.resolveTestContextBootstrapper(testMethod).buildTestContext();
+        throwAwayContext.updateState(originalContext.getTestInstance(), testMethod, null);
+        throwAwayContext.setAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
+        return throwAwayContext;
     }
 
     /**
