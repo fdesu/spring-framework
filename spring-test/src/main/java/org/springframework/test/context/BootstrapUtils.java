@@ -51,7 +51,7 @@ abstract class BootstrapUtils {
 			"org.springframework.test.context.support.DefaultTestContextBootstrapper";
 
     private static final String DEFAULT_TEST_METHOD_CONTEXT_BOOTSTRAPPER_CLASS_NAME =
-            "org.springframework.test.context.support.DefaultTestMethodContextForMethod";
+            "org.springframework.test.context.support.DefaultTestMethodContextBootstrapper";
 
 	private static final String DEFAULT_WEB_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME =
 			"org.springframework.test.context.web.WebTestContextBootstrapper";

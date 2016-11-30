@@ -16,11 +16,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class DefaultTestMethodContextForMethod extends DefaultTestContextBootstrapper {
+public class DefaultTestMethodContextBootstrapper extends DefaultTestContextBootstrapper {
 
     private final Method testMethod;
 
-    public DefaultTestMethodContextForMethod(Method testMethod) {
+    public DefaultTestMethodContextBootstrapper(Method testMethod) {
         this.testMethod = testMethod;
     }
 
