@@ -16,7 +16,6 @@
 
 package org.springframework.test.context;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -76,8 +75,6 @@ public interface TestContextBootstrapper {
 	 * @see #buildMergedContextConfiguration()
 	 */
 	TestContext buildTestContext();
-
-    TestContext buildTestContext(Method method);
 
 	/**
 	 * Build the {@linkplain MergedContextConfiguration merged context configuration}

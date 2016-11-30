@@ -16,17 +16,17 @@
 
 package org.springframework.test.context;
 
-import java.lang.reflect.Constructor;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.util.Set;
 
 /**
  * {@code BootstrapUtils} is a collection of utility methods to assist with
@@ -49,6 +49,9 @@ abstract class BootstrapUtils {
 
 	private static final String DEFAULT_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME =
 			"org.springframework.test.context.support.DefaultTestContextBootstrapper";
+
+    private static final String DEFAULT_TEST_METHOD_CONTEXT_BOOTSTRAPPER_CLASS_NAME =
+            "org.springframework.test.context.support.DefaultTestMethodContextForMethod";
 
 	private static final String DEFAULT_WEB_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME =
 			"org.springframework.test.context.web.WebTestContextBootstrapper";
@@ -147,6 +150,37 @@ abstract class BootstrapUtils {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+    static TestContextBootstrapper resolveTestContextBootstrapper(Method testMethod) {
+        final BootstrapContext bootstrapContext = createBootstrapContext(testMethod.getDeclaringClass());
+        Class<?> testClass = bootstrapContext.getTestClass();
+
+        Class<?> clazz = null;
+        try {
+            clazz = resolveExplicitTestContextBootstrapper(testClass);
+            if (clazz == null) {
+                clazz = resolveDefaultTestContextBootstrapper(testMethod);
+            }
+            if (logger.isDebugEnabled()) {
+                logger.debug(String.format("Instantiating TestContextBootstrapper for test class [%s] from class [%s]",
+                        testClass.getName(), clazz.getName()));
+            }
+            TestContextBootstrapper testContextBootstrapper = BeanUtils.instantiateClass(
+                    (Constructor<? extends TestContextBootstrapper>) clazz.getDeclaredConstructor(Method.class),
+                    testMethod);
+            testContextBootstrapper.setBootstrapContext(bootstrapContext);
+            return testContextBootstrapper;
+        }
+        catch (IllegalStateException ex) {
+            throw ex;
+        }
+        catch (Throwable ex) {
+            throw new IllegalStateException("Could not load TestContextBootstrapper [" + clazz +
+                    "]. Specify @BootstrapWith's 'value' attribute or make the default bootstrapper class available.",
+                    ex);
+        }
+    }
+
 	private static Class<?> resolveExplicitTestContextBootstrapper(Class<?> testClass) {
 		Set<BootstrapWith> annotations = AnnotatedElementUtils.findAllMergedAnnotations(testClass, BootstrapWith.class);
 		if (annotations.size() < 1) {
@@ -167,5 +201,15 @@ abstract class BootstrapUtils {
 		}
 		return ClassUtils.forName(DEFAULT_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME, classLoader);
 	}
+
+    private static Class<?> resolveDefaultTestContextBootstrapper(Method testMethod) throws Exception {
+        ClassLoader classLoader = BootstrapUtils.class.getClassLoader();
+        AnnotationAttributes attributes = AnnotatedElementUtils.findMergedAnnotationAttributes(
+                testMethod, WEB_APP_CONFIGURATION_ANNOTATION_CLASS_NAME, false, false);
+        if (attributes != null) {
+            return ClassUtils.forName(DEFAULT_WEB_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME, classLoader);
+        }
+        return ClassUtils.forName(DEFAULT_TEST_METHOD_CONTEXT_BOOTSTRAPPER_CLASS_NAME, classLoader);
+    }
 
 }

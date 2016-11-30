@@ -304,12 +304,12 @@ public class TestContextManager {
                     testMethod, ContextConfiguration.class, ContextHierarchy.class);
 
             if (descriptor != null) {
-                TestContextBootstrapper bootstrapper = BootstrapUtils.resolveTestContextBootstrapper(
-                        BootstrapUtils.createBootstrapContext(testContext.getTestClass()));
+                TestContextBootstrapper bootstrapper = BootstrapUtils.resolveTestContextBootstrapper(testMethod);
 
-                TestContext context = bootstrapper.buildTestContext(testMethod);
+                TestContext context = bootstrapper.buildTestContext();
                 context.updateState(testContext.getTestInstance(), testMethod, null);
                 context.setAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
+                testContext.setAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
                 return context;
             }
         }

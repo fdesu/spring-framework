@@ -44,7 +44,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -308,7 +307,7 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 		}
 	}
 
-	private MergedContextConfiguration buildDefaultMergedContextConfiguration(Class<?> testClass,
+	protected MergedContextConfiguration buildDefaultMergedContextConfiguration(Class<?> testClass,
 			CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate) {
 
 		List<ContextConfigurationAttributes> defaultConfigAttributesList =
@@ -349,7 +348,7 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 	 * @see ApplicationContextInitializerUtils#resolveInitializerClasses
 	 * @see MergedContextConfiguration
 	 */
-	private MergedContextConfiguration buildMergedContextConfiguration(Class<?> testClass,
+	protected MergedContextConfiguration buildMergedContextConfiguration(Class<?> testClass,
 			List<ContextConfigurationAttributes> configAttributesList, MergedContextConfiguration parentConfig,
 			CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate,
 			boolean requireLocationsClassesOrInitializers) {
@@ -420,55 +419,6 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 		}
 		return customizers;
 	}
-
-    @Override
-    public TestContext buildTestContext(Method method) {
-        return new DefaultTestContext(getBootstrapContext().getTestClass(), buildMergedContextConfiguration(method),
-                getCacheAwareContextLoaderDelegate());
-    }
-
-    @SuppressWarnings("unchecked")
-    public final MergedContextConfiguration buildMergedContextConfiguration(Method method) {
-        CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate = getCacheAwareContextLoaderDelegate();
-
-        if (MetaAnnotationUtils.findAnnotationDescriptorForTypes(
-                method, ContextConfiguration.class, ContextHierarchy.class) == null) {
-            return buildDefaultMergedContextConfiguration(getBootstrapContext().getTestClass(),
-                    cacheAwareContextLoaderDelegate);
-        }
-
-        if (AnnotationUtils.findAnnotation(method, ContextHierarchy.class) != null) {
-            Map<String, List<ContextConfigurationAttributes>> hierarchyMap =
-                    ContextLoaderUtils.buildContextHierarchyMap(method);
-            MergedContextConfiguration parentConfig = null;
-            MergedContextConfiguration mergedConfig = null;
-
-            for (List<ContextConfigurationAttributes> list : hierarchyMap.values()) {
-                List<ContextConfigurationAttributes> reversedList = new ArrayList<>(list);
-                Collections.reverse(reversedList);
-
-                // Don't use the supplied testClass; instead ensure that we are
-                // building the MCC for the actual test class that declared the
-                // configuration for the current level in the context hierarchy.
-                Assert.notEmpty(reversedList, "ContextConfigurationAttributes list must not be empty");
-                Class<?> declaringClass = reversedList.get(0).getDeclaringClass();
-
-                mergedConfig = buildMergedContextConfiguration(
-                        declaringClass, reversedList, parentConfig, cacheAwareContextLoaderDelegate, true);
-                parentConfig = mergedConfig;
-            }
-
-            // Return the last level in the context hierarchy
-            return mergedConfig;
-        } else {
-            List<ContextConfigurationAttributes> configAttributesList
-                    = ContextLoaderUtils.resolveContextConfigurationAttributes(method);
-
-            return buildMergedContextConfiguration(method.getDeclaringClass(),
-                    configAttributesList,
-                    null, cacheAwareContextLoaderDelegate, true);
-        }
-    }
 
 	/**
 	 * Get the {@link ContextCustomizerFactory} instances for this bootstrapper.
