@@ -202,9 +202,8 @@ abstract class ContextLoaderUtils {
 
             hierarchyAttributes.add(0, configAttributesList);
 
-            Class<?> superclass = superMethod.getDeclaringClass().getSuperclass();
-            superMethod = findMethod(superclass, superMethod.getName(), superMethod.getParameterTypes());
-
+            superMethod = findMethod(superMethod.getDeclaringClass().getSuperclass(),
+                    superMethod.getName(), superMethod.getParameterTypes());
             if (superMethod == null) {
                 break;
             }
