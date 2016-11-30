@@ -301,7 +301,7 @@ abstract class ContextLoaderUtils {
         // Check for uniqueness
         Set<List<ContextConfigurationAttributes>> set = new HashSet<>(map.values());
         if (set.size() != map.size()) {
-            String msg = String.format("The @ContextConfiguration elements configured via @ContextHierarchy in " +
+            String msg = String.format("The @ContextConfiguration elements configured via @ContextHierarchy on " +
                             "test method [%s] and its supermethods must define unique contexts per hierarchy level.",
                     method.getName());
             logger.error(msg);
