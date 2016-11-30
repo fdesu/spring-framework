@@ -492,7 +492,8 @@ public abstract class MetaAnnotationUtils {
 
 		public AnnotationOnMethodDescriptor(Method method, Class<?> declaringClass, Class<?> rootDeclaringClass,
                                             Annotation composedAnnotation, T annotation) {
-			super(rootDeclaringClass, declaringClass, composedAnnotation, annotation);
+			super(rootDeclaringClass, declaringClass, composedAnnotation, annotation,
+                    findMergedAnnotationAttributes(method, annotation.annotationType().getName(), false, false));
 			this.method = method;
 		}
 
@@ -501,12 +502,6 @@ public abstract class MetaAnnotationUtils {
         public T synthesizeAnnotation() {
             return AnnotationUtils.synthesizeAnnotation(
                     getAnnotationAttributes(), (Class<T>) getAnnotationType(), method);
-        }
-
-        @Override
-        public AnnotationAttributes getAnnotationAttributes() {
-            return findMergedAnnotationAttributes(
-                    method, getAnnotationType().getName(), false, false);
         }
 
 		public Method getDeclaredMethod() {
