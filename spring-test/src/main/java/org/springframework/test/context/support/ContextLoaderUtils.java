@@ -191,12 +191,12 @@ abstract class ContextLoaderUtils {
                 ContextConfiguration contextConfiguration = AnnotationUtils.synthesizeAnnotation(
                         desc.getAnnotationAttributes(), ContextConfiguration.class, desc.getRootDeclaringClass());
                 convertContextConfigToConfigAttributesAndAddToList(
-                        contextConfiguration, superMethod.getDeclaringClass(), configAttributesList);
+                        contextConfiguration, superMethod.getDeclaringClass(), superMethod, configAttributesList);
             } else if (contextHierarchyDeclaredLocally) {
                 ContextHierarchy contextHierarchy = getAnnotation(superMethod, contextHierarchyType);
                 for (ContextConfiguration contextConfiguration : contextHierarchy.value()) {
                     convertContextConfigToConfigAttributesAndAddToList(
-                            contextConfiguration, superMethod.getDeclaringClass(), configAttributesList);
+                            contextConfiguration, superMethod.getDeclaringClass(), superMethod, configAttributesList);
                 }
             }
 

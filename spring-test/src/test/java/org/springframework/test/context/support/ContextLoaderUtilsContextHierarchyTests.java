@@ -16,14 +16,7 @@
 
 package org.springframework.test.context.support;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import org.junit.Test;
-
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -31,9 +24,25 @@ import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.ContextLoader;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
-import static org.springframework.test.context.support.ContextLoaderUtils.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+import static org.springframework.test.context.support.ContextLoaderUtils.GENERATED_CONTEXT_HIERARCHY_LEVEL_PREFIX;
+import static org.springframework.test.context.support.ContextLoaderUtils.buildContextHierarchyMap;
+import static org.springframework.test.context.support.ContextLoaderUtils.resolveContextHierarchyAttributes;
 
 /**
  * Unit tests for {@link ContextLoaderUtils} involving context hierarchies.
@@ -370,10 +379,11 @@ public class ContextLoaderUtilsContextHierarchyTests extends AbstractContextConf
 	private static class SingleTestClassWithContextConfigurationAndContextHierarchy {
 	}
 
+    @Target({ElementType.TYPE, ElementType.METHOD})
 	@ContextConfiguration("foo.xml")
 	@ContextHierarchy(@ContextConfiguration("bar.xml"))
 	@Retention(RetentionPolicy.RUNTIME)
-	private static @interface ContextConfigurationAndContextHierarchyOnSingleMeta {
+	@interface ContextConfigurationAndContextHierarchyOnSingleMeta {
 	}
 
 	@ContextConfigurationAndContextHierarchyOnSingleMeta
@@ -550,17 +560,19 @@ public class ContextLoaderUtilsContextHierarchyTests extends AbstractContextConf
 
 	@ContextHierarchy(@ContextConfiguration("A.xml"))
 	@Retention(RetentionPolicy.RUNTIME)
-	private static @interface ContextHierarchyA {
+	@interface ContextHierarchyA {
 	}
 
+    @Target({ElementType.TYPE, ElementType.METHOD})
 	@ContextHierarchy(@ContextConfiguration({ "B-one.xml", "B-two.xml" }))
 	@Retention(RetentionPolicy.RUNTIME)
-	private static @interface ContextHierarchyB {
+	@interface ContextHierarchyB {
 	}
 
+    @Target({ElementType.TYPE, ElementType.METHOD})
 	@ContextHierarchy(@ContextConfiguration("C.xml"))
 	@Retention(RetentionPolicy.RUNTIME)
-	private static @interface ContextHierarchyC {
+	@interface ContextHierarchyC {
 	}
 
 	@ContextHierarchyA
@@ -583,9 +595,10 @@ public class ContextLoaderUtilsContextHierarchyTests extends AbstractContextConf
 
 	// -------------------------------------------------------------------------
 
+    @Target({ElementType.TYPE, ElementType.METHOD})
 	@ContextConfiguration
 	@Retention(RetentionPolicy.RUNTIME)
-	private static @interface ContextConfigWithOverrides {
+	@interface ContextConfigWithOverrides {
 
 		String[] locations() default "A.xml";
 	}

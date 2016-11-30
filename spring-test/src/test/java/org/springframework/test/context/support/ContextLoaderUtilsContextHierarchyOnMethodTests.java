@@ -4,21 +4,199 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextHierarchy;
+import org.springframework.test.context.ContextLoader;
 
 import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.springframework.test.context.support.ContextLoaderUtils.GENERATED_CONTEXT_HIERARCHY_LEVEL_PREFIX;
 import static org.springframework.test.context.support.ContextLoaderUtils.buildContextHierarchyMap;
+import static org.springframework.test.context.support.ContextLoaderUtils.resolveContextHierarchyAttributes;
 
 public class ContextLoaderUtilsContextHierarchyOnMethodTests extends AbstractContextConfigurationUtilsTests {
+
+    @Test(expected = IllegalStateException.class)
+    public void resolveContextHierarchyAttributesForSingleTestClassWithContextConfigurationAndContextHierarchy() throws Exception {
+        resolveContextHierarchyAttributes(
+                SingleTestClassWithContextConfigurationAndContextHierarchy.class.getDeclaredMethod("something"));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void resolveContextHierarchyAttributesForSingleTestClassWithContextConfigurationAndContextHierarchyOnSingleMetaAnnotation() throws Exception {
+        resolveContextHierarchyAttributes(
+                SingleTestClassWithContextConfigurationAndContextHierarchyOnSingleMetaAnnotation.class.getDeclaredMethod("something"));
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForSingleTestClassWithImplicitSingleLevelContextHierarchy() throws Exception {
+        List<List<ContextConfigurationAttributes>> hierarchyAttributes = resolveContextHierarchyAttributes(
+                BareMethodAnnotations.class.getDeclaredMethod("something"));
+        assertEquals(1, hierarchyAttributes.size());
+        List<ContextConfigurationAttributes> configAttributesList = hierarchyAttributes.get(0);
+        assertEquals(1, configAttributesList.size());
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForSingleTestClassWithSingleLevelContextHierarchy() throws Exception {
+        List<List<ContextConfigurationAttributes>> hierarchyAttributes = resolveContextHierarchyAttributes(
+                SingleTestClassWithSingleLevelContextHierarchy.class.getDeclaredMethod("something"));
+        assertEquals(1, hierarchyAttributes.size());
+        List<ContextConfigurationAttributes> configAttributesList = hierarchyAttributes.get(0);
+        assertEquals(1, configAttributesList.size());
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForSingleTestClassWithSingleLevelContextHierarchyFromMetaAnnotation() throws Exception {
+        Class<SingleTestClassWithSingleLevelContextHierarchyFromMetaAnnotation> testClass = SingleTestClassWithSingleLevelContextHierarchyFromMetaAnnotation.class;
+        Method something = testClass.getDeclaredMethod("something");
+        List<List<ContextConfigurationAttributes>> hierarchyAttributes = resolveContextHierarchyAttributes(something);
+        assertEquals(1, hierarchyAttributes.size());
+
+        List<ContextConfigurationAttributes> configAttributesList = hierarchyAttributes.get(0);
+        assertNotNull(configAttributesList);
+        assertEquals(1, configAttributesList.size());
+        assertAttributes(configAttributesList.get(0), testClass, something, new String[] { "A.xml" }, EMPTY_CLASS_ARRAY,
+                ContextLoader.class, true);
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForSingleTestClassWithTripleLevelContextHierarchy() throws Exception {
+        Class<SingleTestClassWithTripleLevelContextHierarchy> testClass = SingleTestClassWithTripleLevelContextHierarchy.class;
+        Method something = testClass.getDeclaredMethod("something");
+        List<List<ContextConfigurationAttributes>> hierarchyAttributes = resolveContextHierarchyAttributes(something);
+        assertEquals(1, hierarchyAttributes.size());
+
+        List<ContextConfigurationAttributes> configAttributesList = hierarchyAttributes.get(0);
+        assertNotNull(configAttributesList);
+        assertEquals(3, configAttributesList.size());
+        assertAttributes(configAttributesList.get(0), testClass, something, new String[] { "A.xml" }, EMPTY_CLASS_ARRAY,
+                ContextLoader.class, true);
+        assertAttributes(configAttributesList.get(1), testClass, something, new String[] { "B.xml" }, EMPTY_CLASS_ARRAY,
+                ContextLoader.class, true);
+        assertAttributes(configAttributesList.get(2), testClass, something, new String[] { "C.xml" }, EMPTY_CLASS_ARRAY,
+                ContextLoader.class, true);
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForTestClassHierarchyWithSingleLevelContextHierarchies() throws Exception {
+        List<List<ContextConfigurationAttributes>> hierarchyAttributes = resolveContextHierarchyAttributes(
+                TestClass3WithSingleLevelContextHierarchy.class.getDeclaredMethod("something"));
+        assertEquals(3, hierarchyAttributes.size());
+
+        List<ContextConfigurationAttributes> configAttributesListClassLevel1 = hierarchyAttributes.get(0);
+        assertEquals(1, configAttributesListClassLevel1.size());
+        assertThat(configAttributesListClassLevel1.get(0).getLocations()[0], equalTo("one.xml"));
+
+        List<ContextConfigurationAttributes> configAttributesListClassLevel2 = hierarchyAttributes.get(1);
+        assertEquals(1, configAttributesListClassLevel2.size());
+        assertArrayEquals(new String[] { "two-A.xml", "two-B.xml" },
+                configAttributesListClassLevel2.get(0).getLocations());
+
+        List<ContextConfigurationAttributes> configAttributesListClassLevel3 = hierarchyAttributes.get(2);
+        assertEquals(1, configAttributesListClassLevel3.size());
+        assertThat(configAttributesListClassLevel3.get(0).getLocations()[0], equalTo("three.xml"));
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForTestClassHierarchyWithSingleLevelContextHierarchiesAndMetaAnnotations() throws Exception {
+        Method something = TestClass3WithSingleLevelContextHierarchyFromMetaAnnotation.class.getDeclaredMethod("something");
+        List<List<ContextConfigurationAttributes>> hierarchyAttributes = resolveContextHierarchyAttributes(something);
+        assertEquals(3, hierarchyAttributes.size());
+
+        List<ContextConfigurationAttributes> configAttributesListClassLevel1 = hierarchyAttributes.get(0);
+        assertEquals(1, configAttributesListClassLevel1.size());
+        assertThat(configAttributesListClassLevel1.get(0).getLocations()[0], equalTo("A.xml"));
+        assertAttributes(configAttributesListClassLevel1.get(0),
+                TestClass1WithSingleLevelContextHierarchyFromMetaAnnotation.class,
+                TestClass1WithSingleLevelContextHierarchyFromMetaAnnotation.class.getDeclaredMethod("something"),
+                new String[] { "A.xml" }, EMPTY_CLASS_ARRAY, ContextLoader.class, true);
+
+        List<ContextConfigurationAttributes> configAttributesListClassLevel2 = hierarchyAttributes.get(1);
+        assertEquals(1, configAttributesListClassLevel2.size());
+        assertArrayEquals(new String[] { "B-one.xml", "B-two.xml" },
+                configAttributesListClassLevel2.get(0).getLocations());
+        assertAttributes(configAttributesListClassLevel2.get(0),
+                TestClass2WithSingleLevelContextHierarchyFromMetaAnnotation.class,
+                TestClass2WithSingleLevelContextHierarchyFromMetaAnnotation.class.getDeclaredMethod("something"),
+                new String[] { "B-one.xml", "B-two.xml" }, EMPTY_CLASS_ARRAY, ContextLoader.class, true);
+
+        List<ContextConfigurationAttributes> configAttributesListClassLevel3 = hierarchyAttributes.get(2);
+        assertEquals(1, configAttributesListClassLevel3.size());
+        assertThat(configAttributesListClassLevel3.get(0).getLocations()[0], equalTo("C.xml"));
+        assertAttributes(configAttributesListClassLevel3.get(0),
+                TestClass3WithSingleLevelContextHierarchyFromMetaAnnotation.class, something,
+                new String[] { "C.xml" }, EMPTY_CLASS_ARRAY, ContextLoader.class, true);
+    }
+
+    private void assertOneTwo(List<List<ContextConfigurationAttributes>> hierarchyAttributes) {
+        assertEquals(2, hierarchyAttributes.size());
+
+        List<ContextConfigurationAttributes> configAttributesListClassLevel1 = hierarchyAttributes.get(0);
+        List<ContextConfigurationAttributes> configAttributesListClassLevel2 = hierarchyAttributes.get(1);
+
+        assertEquals(1, configAttributesListClassLevel1.size());
+        assertThat(configAttributesListClassLevel1.get(0).getLocations()[0], equalTo("one.xml"));
+
+        assertEquals(1, configAttributesListClassLevel2.size());
+        assertThat(configAttributesListClassLevel2.get(0).getLocations()[0], equalTo("two.xml"));
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForTestClassHierarchyWithBareContextConfigurationInSuperclass() throws Exception {
+        assertOneTwo(resolveContextHierarchyAttributes(
+                TestClass2WithBareContextConfigurationInSuperclass.class.getDeclaredMethod("something")));
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForTestClassHierarchyWithBareContextConfigurationInSubclass() throws Exception {
+        assertOneTwo(resolveContextHierarchyAttributes(
+                TestClass2WithBareContextConfigurationInSubclass.class.getDeclaredMethod("something")));
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForTestClassHierarchyWithBareMetaContextConfigWithOverridesInSuperclass() throws Exception {
+        assertOneTwo(resolveContextHierarchyAttributes(
+                TestClass2WithBareMetaContextConfigWithOverridesInSuperclass.class.getDeclaredMethod("something")));
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForTestClassHierarchyWithBareMetaContextConfigWithOverridesInSubclass() throws Exception {
+        assertOneTwo(resolveContextHierarchyAttributes(
+                TestClass2WithBareMetaContextConfigWithOverridesInSubclass.class.getDeclaredMethod("something")));
+    }
+
+    @Test
+    public void resolveContextHierarchyAttributesForTestClassHierarchyWithMultiLevelContextHierarchies() throws Exception {
+        List<List<ContextConfigurationAttributes>> hierarchyAttributes = resolveContextHierarchyAttributes(
+                TestClass3WithMultiLevelContextHierarchy.class.getDeclaredMethod("something"));
+        assertEquals(3, hierarchyAttributes.size());
+
+        List<ContextConfigurationAttributes> configAttributesListClassLevel1 = hierarchyAttributes.get(0);
+        assertEquals(2, configAttributesListClassLevel1.size());
+        assertThat(configAttributesListClassLevel1.get(0).getLocations()[0], equalTo("1-A.xml"));
+        assertThat(configAttributesListClassLevel1.get(1).getLocations()[0], equalTo("1-B.xml"));
+
+        List<ContextConfigurationAttributes> configAttributesListClassLevel2 = hierarchyAttributes.get(1);
+        assertEquals(2, configAttributesListClassLevel2.size());
+        assertThat(configAttributesListClassLevel2.get(0).getLocations()[0], equalTo("2-A.xml"));
+        assertThat(configAttributesListClassLevel2.get(1).getLocations()[0], equalTo("2-B.xml"));
+
+        List<ContextConfigurationAttributes> configAttributesListClassLevel3 = hierarchyAttributes.get(2);
+        assertEquals(3, configAttributesListClassLevel3.size());
+        assertThat(configAttributesListClassLevel3.get(0).getLocations()[0], equalTo("3-A.xml"));
+        assertThat(configAttributesListClassLevel3.get(1).getLocations()[0], equalTo("3-B.xml"));
+        assertThat(configAttributesListClassLevel3.get(2).getLocations()[0], equalTo("3-C.xml"));
+    }
 
     @Test
     public void buildContextHierarchyMapForTestClassHierarchyWithMultiLevelContextHierarchies() throws Exception {
@@ -137,6 +315,118 @@ public class ContextLoaderUtilsContextHierarchyOnMethodTests extends AbstractCon
 
 
     //-------------------------------------------------------------
+
+    private static class SingleTestClassWithContextConfigurationAndContextHierarchy {
+        @ContextConfiguration("foo.xml")
+        @ContextHierarchy(@ContextConfiguration("bar.xml"))
+        public void something() {}
+
+    }
+
+    private static class SingleTestClassWithContextConfigurationAndContextHierarchyOnSingleMetaAnnotation {
+        @ContextLoaderUtilsContextHierarchyTests.ContextConfigurationAndContextHierarchyOnSingleMeta
+        public void something() {}
+    }
+
+    private static class SingleTestClassWithSingleLevelContextHierarchy {
+        @ContextHierarchy(@ContextConfiguration("A.xml"))
+        public void something() {}
+    }
+
+    private static class SingleTestClassWithTripleLevelContextHierarchy {
+        @ContextHierarchy({//
+                //
+                @ContextConfiguration("A.xml"),//
+                @ContextConfiguration("B.xml"),//
+                @ContextConfiguration("C.xml") //
+        })
+        public void something() {}
+    }
+
+    private static class TestClass1WithSingleLevelContextHierarchy {
+        @ContextHierarchy(@ContextConfiguration("one.xml"))
+        public void something() {}
+    }
+
+    private static class TestClass2WithSingleLevelContextHierarchy extends TestClass1WithSingleLevelContextHierarchy {
+        @ContextHierarchy(@ContextConfiguration({ "two-A.xml", "two-B.xml" }))
+        public void something() {}
+    }
+
+    private static class TestClass3WithSingleLevelContextHierarchy extends TestClass2WithSingleLevelContextHierarchy {
+        @ContextHierarchy(@ContextConfiguration("three.xml"))
+        public void something() {}
+    }
+
+    private static class TestClass1WithBareContextConfigurationInSuperclass {
+        @ContextConfiguration("one.xml")
+        public void something() {}
+    }
+
+    private static class TestClass2WithBareContextConfigurationInSuperclass extends
+            TestClass1WithBareContextConfigurationInSuperclass {
+        @ContextHierarchy(@ContextConfiguration("two.xml"))
+        public void something() {}
+    }
+
+    private static class TestClass1WithBareContextConfigurationInSubclass {
+        @ContextHierarchy(@ContextConfiguration("one.xml"))
+        public void something() {}
+    }
+
+    private static class TestClass2WithBareContextConfigurationInSubclass extends
+            TestClass1WithBareContextConfigurationInSubclass {
+        @ContextConfiguration("two.xml")
+        public void something() {}
+    }
+
+    private static class TestClass1WithBareMetaContextConfigWithOverridesInSuperclass {
+        @ContextLoaderUtilsContextHierarchyTests.ContextConfigWithOverrides(locations = "one.xml")
+        public void something() {}
+    }
+
+    private static class TestClass2WithBareMetaContextConfigWithOverridesInSuperclass extends
+            TestClass1WithBareMetaContextConfigWithOverridesInSuperclass {
+        @ContextHierarchy(@ContextConfiguration(locations = "two.xml"))
+        public void something() {}
+    }
+
+    private static class TestClass1WithBareMetaContextConfigWithOverridesInSubclass {
+        @ContextHierarchy(@ContextConfiguration(locations = "one.xml"))
+        public void something() {}
+    }
+
+    private static class TestClass2WithBareMetaContextConfigWithOverridesInSubclass extends
+            TestClass1WithBareMetaContextConfigWithOverridesInSubclass {
+        @ContextLoaderUtilsContextHierarchyTests.ContextConfigWithOverrides(locations = "two.xml")
+        public void something() {}
+    }
+
+
+
+
+    private static class SingleTestClassWithSingleLevelContextHierarchyFromMetaAnnotation {
+        @ContextLoaderUtilsContextHierarchyTests.ContextHierarchyA
+        public void something() {}
+    }
+
+    private static class TestClass1WithSingleLevelContextHierarchyFromMetaAnnotation {
+        @ContextLoaderUtilsContextHierarchyTests.ContextHierarchyA
+        public void something() {}
+    }
+
+    private static class TestClass2WithSingleLevelContextHierarchyFromMetaAnnotation extends
+            TestClass1WithSingleLevelContextHierarchyFromMetaAnnotation {
+        @ContextLoaderUtilsContextHierarchyTests.ContextHierarchyB
+        public void something() {}
+    }
+
+    private static class TestClass3WithSingleLevelContextHierarchyFromMetaAnnotation extends
+            TestClass2WithSingleLevelContextHierarchyFromMetaAnnotation {
+        @ContextLoaderUtilsContextHierarchyTests.ContextHierarchyC
+        public void something() {}
+    }
+
 
 
     private static class TestClass1WithMultiLevelContextHierarchy {
