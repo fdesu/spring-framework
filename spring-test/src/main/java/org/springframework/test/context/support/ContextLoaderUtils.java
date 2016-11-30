@@ -24,8 +24,8 @@ import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.SmartContextLoader;
 import org.springframework.test.util.MetaAnnotationUtils;
+import org.springframework.test.util.MetaAnnotationUtils.AnnotationOnMethodDescriptor;
 import org.springframework.util.Assert;
-import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
@@ -42,8 +42,7 @@ import static org.springframework.test.util.MetaAnnotationUtils.AnnotationDescri
 import static org.springframework.test.util.MetaAnnotationUtils.UntypedAnnotationDescriptor;
 import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptor;
 import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForTypes;
-import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptor;
-import static org.springframework.test.util.MetaAnnotationUtils.findAnnotationDescriptorForTypes;
+import static org.springframework.util.ReflectionUtils.findMethod;
 
 /**
  * Utility methods for resolving {@link ContextConfigurationAttributes} from the
@@ -204,7 +203,7 @@ abstract class ContextLoaderUtils {
             hierarchyAttributes.add(0, configAttributesList);
 
             Class<?> superclass = superMethod.getDeclaringClass().getSuperclass();
-            superMethod = ReflectionUtils.findMethod(superclass, superMethod.getName(), superMethod.getParameterTypes());
+            superMethod = findMethod(superclass, superMethod.getName(), superMethod.getParameterTypes());
 
             if (superMethod == null) {
                 break;
@@ -355,14 +354,23 @@ abstract class ContextLoaderUtils {
         List<ContextConfigurationAttributes> attributesList = new ArrayList<>();
         Class<ContextConfiguration> annotationType = ContextConfiguration.class;
 
-        AnnotationDescriptor<ContextConfiguration> descriptor = MetaAnnotationUtils.findAnnotationDescriptor(
-                method, annotationType);
+        AnnotationOnMethodDescriptor<ContextConfiguration> descriptor = findAnnotationDescriptor(method, annotationType);
         Assert.notNull(descriptor, () -> String.format(
                 "Could not find an 'annotation declaring method' for annotation type [%s] and method [%s]",
                 annotationType.getName(), method.getName()));
 
-        convertContextConfigToConfigAttributesAndAddToList(descriptor.synthesizeAnnotation(),
-                descriptor.getRootDeclaringClass(), attributesList);
+        Method superMethod = findMethod(method.getDeclaringClass().getSuperclass(),
+                method.getName(), method.getParameterTypes());
+        while (descriptor != null) {
+            convertContextConfigToConfigAttributesAndAddToList(descriptor.synthesizeAnnotation(),
+                    descriptor.getRootDeclaringClass(), descriptor.getDeclaredMethod(), attributesList);
+            if (superMethod == null) {
+                break;
+            }
+            descriptor = findAnnotationDescriptor(superMethod, annotationType);
+            superMethod = findMethod(superMethod.getDeclaringClass().getSuperclass(),
+                    superMethod.getName(), superMethod.getParameterTypes());
+        }
 
         return attributesList;
     }
@@ -386,5 +394,24 @@ abstract class ContextLoaderUtils {
 		}
 		attributesList.add(attributes);
 	}
+
+    private static void convertContextConfigToConfigAttributesAndAddToList(ContextConfiguration contextConfiguration,
+                                                                           Class<?> declaringClass, Method declaringMethod,
+                                                                           final List<ContextConfigurationAttributes> attributesList) {
+
+        if (logger.isTraceEnabled()) {
+            logger.trace(String.format("Retrieved @ContextConfiguration [%s] for declaring method [%s].",
+                    contextConfiguration, declaringMethod.getName()));
+        }
+        ContextConfigurationAttributes attributes = new ContextConfigurationAttributes(declaringClass, declaringMethod,
+                        contextConfiguration.locations(), contextConfiguration.classes(),
+                        contextConfiguration.inheritLocations(), contextConfiguration.initializers(),
+                        contextConfiguration.inheritInitializers(), contextConfiguration.name(),
+                        contextConfiguration.loader());
+        if (logger.isTraceEnabled()) {
+            logger.trace("Resolved context configuration attributes: " + attributes);
+        }
+        attributesList.add(attributes);
+    }
 
 }

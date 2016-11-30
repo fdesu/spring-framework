@@ -16,11 +16,8 @@
 
 package org.springframework.test.context;
 
-import java.util.Arrays;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.AnnotationAttributes;
@@ -28,6 +25,9 @@ import org.springframework.core.style.ToStringCreator;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * {@code ContextConfigurationAttributes} encapsulates the context configuration
@@ -46,10 +46,11 @@ public class ContextConfigurationAttributes {
 
 	private static final Class<?>[] EMPTY_CLASSES = new Class<?>[0];
 
-
 	private static final Log logger = LogFactory.getLog(ContextConfigurationAttributes.class);
 
 	private final Class<?> declaringClass;
+
+    private final Method declaringMethod;
 
 	private Class<?>[] classes;
 
@@ -124,7 +125,6 @@ public class ContextConfigurationAttributes {
 			Class<?> declaringClass, String[] locations, Class<?>[] classes, boolean inheritLocations,
 			Class<? extends ApplicationContextInitializer<? extends ConfigurableApplicationContext>>[] initializers,
 			boolean inheritInitializers, Class<? extends ContextLoader> contextLoaderClass) {
-
 		this(declaringClass, locations, classes, inheritLocations, initializers, inheritInitializers, null,
 				contextLoaderClass);
 	}
@@ -149,28 +149,37 @@ public class ContextConfigurationAttributes {
 			Class<?> declaringClass, String[] locations, Class<?>[] classes, boolean inheritLocations,
 			Class<? extends ApplicationContextInitializer<? extends ConfigurableApplicationContext>>[] initializers,
 			boolean inheritInitializers, String name, Class<? extends ContextLoader> contextLoaderClass) {
-
-		Assert.notNull(declaringClass, "declaringClass must not be null");
-		Assert.notNull(contextLoaderClass, "contextLoaderClass must not be null");
-
-		if (!ObjectUtils.isEmpty(locations) && !ObjectUtils.isEmpty(classes) && logger.isDebugEnabled()) {
-			logger.debug(String.format(
-					"Test class [%s] has been configured with @ContextConfiguration's 'locations' (or 'value') %s " +
-					"and 'classes' %s attributes. Most SmartContextLoader implementations support " +
-					"only one declaration of resources per @ContextConfiguration annotation.",
-					declaringClass.getName(), ObjectUtils.nullSafeToString(locations),
-					ObjectUtils.nullSafeToString(classes)));
-		}
-
-		this.declaringClass = declaringClass;
-		this.locations = locations;
-		this.classes = classes;
-		this.inheritLocations = inheritLocations;
-		this.initializers = initializers;
-		this.inheritInitializers = inheritInitializers;
-		this.name = (StringUtils.hasText(name) ? name : null);
-		this.contextLoaderClass = contextLoaderClass;
+        this(declaringClass, null, locations, classes, inheritLocations, initializers, inheritInitializers,
+                name, contextLoaderClass);
 	}
+
+    public ContextConfigurationAttributes(
+            Class<?> declaringClass, Method declaringMethod, String[] locations, Class<?>[] classes, boolean inheritLocations,
+            Class<? extends ApplicationContextInitializer<? extends ConfigurableApplicationContext>>[] initializers,
+            boolean inheritInitializers, String name, Class<? extends ContextLoader> contextLoaderClass) {
+
+        Assert.notNull(declaringClass, "declaringClass must not be null");
+        Assert.notNull(contextLoaderClass, "contextLoaderClass must not be null");
+
+        if (!ObjectUtils.isEmpty(locations) && !ObjectUtils.isEmpty(classes) && logger.isDebugEnabled()) {
+            logger.debug(String.format(
+                    "Test class [%s] has been configured with @ContextConfiguration's 'locations' (or 'value') %s " +
+                            "and 'classes' %s attributes. Most SmartContextLoader implementations support " +
+                            "only one declaration of resources per @ContextConfiguration annotation.",
+                    declaringClass.getName(), ObjectUtils.nullSafeToString(locations),
+                    ObjectUtils.nullSafeToString(classes)));
+        }
+
+        this.declaringClass = declaringClass;
+        this.declaringMethod = declaringMethod;
+        this.locations = locations;
+        this.classes = classes;
+        this.inheritLocations = inheritLocations;
+        this.initializers = initializers;
+        this.inheritInitializers = inheritInitializers;
+        this.name = (StringUtils.hasText(name) ? name : null);
+        this.contextLoaderClass = contextLoaderClass;
+    }
 
 
 	/**
@@ -182,6 +191,10 @@ public class ContextConfigurationAttributes {
 	public Class<?> getDeclaringClass() {
 		return this.declaringClass;
 	}
+
+	public Method getDeclaringMethod() {
+        return this.declaringMethod;
+    }
 
 	/**
 	 * Set the <em>processed</em> annotated classes, effectively overriding the
