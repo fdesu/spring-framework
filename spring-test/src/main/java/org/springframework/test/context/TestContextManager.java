@@ -303,7 +303,6 @@ public class TestContextManager {
             UntypedAnnotationDescriptor descriptor = findAnnotationDescriptorForTypes(testMethod,
                     ContextConfiguration.class, ContextHierarchy.class);
             if (descriptor != null) {
-                originalTestContext.setAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
                 return createThrowAwayContext(testMethod, originalTestContext);
             }
         }
