@@ -32,16 +32,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.springframework.util.Assert.notNull;
+
 public class DefaultTestMethodContextBootstrapper extends DefaultTestContextBootstrapper {
 
-    private final Method testMethod;
-
-    public DefaultTestMethodContextBootstrapper(Method testMethod) {
-        this.testMethod = testMethod;
-    }
+    private Method testMethod;
 
     @Override
     public TestContext buildTestContext() {
+        notNull(testMethod, "testMethod should not be null");
         return new DefaultTestContext(getBootstrapContext().getTestClass(),
                 buildMergedContextConfiguration(testMethod),
                 getCacheAwareContextLoaderDelegate());
@@ -87,5 +86,9 @@ public class DefaultTestMethodContextBootstrapper extends DefaultTestContextBoot
                     configAttributesList,
                     null, cacheAwareContextLoaderDelegate, true);
         }
+    }
+
+    public void setTestMethod(Method testMethod) {
+        this.testMethod = testMethod;
     }
 }

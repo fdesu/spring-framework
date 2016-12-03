@@ -21,6 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationAttributes;
+import org.springframework.test.context.support.DefaultTestMethodContextBootstrapper;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -165,10 +166,10 @@ abstract class BootstrapUtils {
                 logger.debug(String.format("Instantiating TestContextBootstrapper for test class [%s] from class [%s]",
                         testClass.getName(), clazz.getName()));
             }
-            TestContextBootstrapper testContextBootstrapper = BeanUtils.instantiateClass(
-                    (Constructor<? extends TestContextBootstrapper>) clazz.getDeclaredConstructor(Method.class),
-                    testMethod);
+            DefaultTestMethodContextBootstrapper testContextBootstrapper = BeanUtils.instantiateClass(
+                    clazz, DefaultTestMethodContextBootstrapper.class);
             testContextBootstrapper.setBootstrapContext(bootstrapContext);
+            testContextBootstrapper.setTestMethod(testMethod);
             return testContextBootstrapper;
         }
         catch (IllegalStateException ex) {
