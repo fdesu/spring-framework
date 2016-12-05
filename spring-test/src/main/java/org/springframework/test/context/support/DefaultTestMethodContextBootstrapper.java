@@ -17,12 +17,15 @@
 package org.springframework.test.context.support;
 
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.test.context.BootstrapContext;
 import org.springframework.test.context.CacheAwareContextLoaderDelegate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextHierarchy;
+import org.springframework.test.context.ContextLoader;
 import org.springframework.test.context.MergedContextConfiguration;
 import org.springframework.test.context.TestContext;
+import org.springframework.test.context.TestContextBootstrapper;
 import org.springframework.test.util.MetaAnnotationUtils;
 import org.springframework.util.Assert;
 
@@ -32,12 +35,29 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.springframework.test.context.support.ContextLoaderUtils.buildContextHierarchyMap;
+import static org.springframework.test.context.support.ContextLoaderUtils.resolveContextConfigurationAttributes;
 import static org.springframework.util.Assert.notNull;
 
+/**
+ * Default implementation of the {@link TestContextBootstrapper} SPI for supplied test method.
+ *
+ * <p>Uses {@link DelegatingSmartContextLoader} as the default {@link ContextLoader}.
+ *
+ * @author Sergei Ustimenko
+ * @since 5.0
+ */
 public class DefaultTestMethodContextBootstrapper extends DefaultTestContextBootstrapper {
 
     private Method testMethod;
 
+    /**
+     * Build a new {@link DefaultTestContext} using the {@linkplain Method test method}
+     * in the {@link BootstrapContext} associated with this bootstrapper and
+     * by delegating to {@link #buildMergedContextConfiguration(Method)} and
+     * {@link #getCacheAwareContextLoaderDelegate()}.
+     * @since 5.0
+     */
     @Override
     public TestContext buildTestContext() {
         notNull(testMethod, "testMethod should not be null");
@@ -46,7 +66,15 @@ public class DefaultTestMethodContextBootstrapper extends DefaultTestContextBoot
                 getCacheAwareContextLoaderDelegate());
     }
 
-    private MergedContextConfiguration buildMergedContextConfiguration(Method method) {
+    /**
+     * Build the {@linkplain MergedContextConfiguration merged context configuration}
+     * for the supplied test method.
+     * @param method supplied method for which to create merged context configuration
+     * @return the merged context configuration, never {@code null}
+     * @see #buildMergedContextConfiguration()
+     * @see #buildTestContext()
+     */
+    protected MergedContextConfiguration buildMergedContextConfiguration(Method method) {
         CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate = getCacheAwareContextLoaderDelegate();
 
         if (MetaAnnotationUtils.findAnnotationDescriptorForTypes(
@@ -56,8 +84,7 @@ public class DefaultTestMethodContextBootstrapper extends DefaultTestContextBoot
         }
 
         if (AnnotationUtils.findAnnotation(method, ContextHierarchy.class) != null) {
-            Map<String, List<ContextConfigurationAttributes>> hierarchyMap =
-                    ContextLoaderUtils.buildContextHierarchyMap(method);
+            Map<String, List<ContextConfigurationAttributes>> hierarchyMap = buildContextHierarchyMap(method);
             MergedContextConfiguration parentConfig = null;
             MergedContextConfiguration mergedConfig = null;
 
@@ -71,17 +98,15 @@ public class DefaultTestMethodContextBootstrapper extends DefaultTestContextBoot
                 Assert.notEmpty(reversedList, "ContextConfigurationAttributes list must not be empty");
                 Class<?> declaringClass = reversedList.get(0).getDeclaringClass();
 
-                mergedConfig = buildMergedContextConfiguration(
-                        declaringClass, reversedList, parentConfig, cacheAwareContextLoaderDelegate, true);
+                mergedConfig = buildMergedContextConfiguration(declaringClass, reversedList, parentConfig,
+                        cacheAwareContextLoaderDelegate, true);
                 parentConfig = mergedConfig;
             }
 
             // Return the last level in the context hierarchy
             return mergedConfig;
         } else {
-            List<ContextConfigurationAttributes> configAttributesList
-                    = ContextLoaderUtils.resolveContextConfigurationAttributes(method);
-
+            List<ContextConfigurationAttributes> configAttributesList = resolveContextConfigurationAttributes(method);
             return buildMergedContextConfiguration(method.getDeclaringClass(),
                     configAttributesList,
                     null, cacheAwareContextLoaderDelegate, true);
