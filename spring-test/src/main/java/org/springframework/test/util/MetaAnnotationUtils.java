@@ -210,35 +210,35 @@ public abstract class MetaAnnotationUtils {
             return null;
         }
 
-        Method superMethod = ReflectionUtils.findMethod(declaringClass, method.getName(), method.getParameterTypes());
+        Method foundMethod = ReflectionUtils.findMethod(declaringClass, method.getName(), method.getParameterTypes());
 
-        if (superMethod == null) {
+        if (foundMethod == null) {
             return null;
         }
 
         // Declared locally?
         for (Class<? extends Annotation> annotationType : annotationTypes) {
-            if (isAnnotationDeclaredLocally(annotationType, superMethod)) {
-                return new UntypedAnnotationOnMethodDescriptor(superMethod, declaringClass, rootDeclaringClass,
-                        null, getAnnotation(superMethod, annotationType));
+            if (isAnnotationDeclaredLocally(annotationType, foundMethod)) {
+                return new UntypedAnnotationOnMethodDescriptor(foundMethod, declaringClass, rootDeclaringClass,
+                        null, getAnnotation(foundMethod, annotationType));
             }
         }
 
         // Declared on a composed annotation (i.e., as a meta-annotation)?
-        for (Annotation composedAnnotation : superMethod.getDeclaredAnnotations()) {
+        for (Annotation composedAnnotation : foundMethod.getDeclaredAnnotations()) {
             if (!AnnotationUtils.isInJavaLangAnnotationPackage(composedAnnotation) && visited.add(composedAnnotation)) {
                 UntypedAnnotationDescriptor descriptor = findAnnotationDescriptorForTypes(
                         composedAnnotation.annotationType(), annotationTypes);
                 if (descriptor != null) {
-                    return new UntypedAnnotationOnMethodDescriptor(superMethod, descriptor.getDeclaringClass(),
+                    return new UntypedAnnotationOnMethodDescriptor(foundMethod, descriptor.getDeclaringClass(),
                             rootDeclaringClass, composedAnnotation,
                             descriptor.getAnnotation());
                 }
             }
         }
 
-        for (Class<?> ifc : superMethod.getDeclaringClass().getInterfaces()) {
-            UntypedAnnotationOnMethodDescriptor descriptor = findAnnotationDescriptorForTypes(superMethod, ifc,
+        for (Class<?> ifc : foundMethod.getDeclaringClass().getInterfaces()) {
+            UntypedAnnotationOnMethodDescriptor descriptor = findAnnotationDescriptorForTypes(foundMethod, ifc,
                     rootDeclaringClass, visited, annotationTypes);
             if (descriptor != null) {
                 return new UntypedAnnotationOnMethodDescriptor(descriptor.getDeclaringMethod(),
@@ -248,7 +248,7 @@ public abstract class MetaAnnotationUtils {
         }
 
         // Declared on a superclass?
-        return findAnnotationDescriptorForTypes(superMethod, superMethod.getDeclaringClass().getSuperclass(),
+        return findAnnotationDescriptorForTypes(foundMethod, foundMethod.getDeclaringClass().getSuperclass(),
                 rootDeclaringClass, visited, annotationTypes);
     }
 
