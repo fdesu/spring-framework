@@ -25,6 +25,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -61,7 +66,25 @@ public class ContextHierarchyOnMethodTest extends ContextHierarchyOnMethodParent
     @Test
     @Override
     public void shouldLoadContextsInStraightOrderFromParent() {
-        assertEquals("second", testBean);
+        assertEquals("parent", testBean);
+    }
+
+    @Test
+    @Override
+    public void shouldLoadContextsInReverseOrderFromParentParent() {
+        assertEquals("parentParent", testBean);
+    }
+
+    @Test
+    @Override
+    public void shouldLoadContextsForMetaOnParent() {
+        assertEquals("metaOnParent", testBean);
+    }
+
+    @Test
+    @Override
+    public void shouldLoadContextsForMetaOnParentParent() {
+        assertEquals("metaOnParentParent", testBean);
     }
 
     @Test
@@ -74,6 +97,8 @@ public class ContextHierarchyOnMethodTest extends ContextHierarchyOnMethodParent
         assertNotNull("parent ApplicationContext", applicationContext.getParent());
         assertNull("grandparent ApplicationContext", applicationContext.getParent().getParent());
     }
+
+    // --------------------------------------------------------------------------
 
     public static class FirstContext {
         @Bean
@@ -89,6 +114,20 @@ public class ContextHierarchyOnMethodTest extends ContextHierarchyOnMethodParent
         }
     }
 
+    public static class ParentLastContext {
+        @Bean
+        public String testBean() {
+            return "parent";
+        }
+    }
+
+    public static class ParentParentLastContext {
+        @Bean
+        public String testBean() {
+            return "parentParent";
+        }
+    }
+
     public static class MainContext {
         @Bean
         public String testBean() {
@@ -96,14 +135,44 @@ public class ContextHierarchyOnMethodTest extends ContextHierarchyOnMethodParent
         }
     }
 
+    public static class MetaOnParentContext {
+        @Bean
+        public String testBean() {
+            return "metaOnParent";
+        }
+    }
+
+    public static class MetaOnParentParentContext {
+        @Bean
+        public String testBean() {
+            return "metaOnParentParent";
+        }
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @ContextHierarchy({@ContextConfiguration(classes = MetaOnParentContext.class)})
+    public @interface MetaOnParent {}
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @ContextHierarchy({@ContextConfiguration(classes = MetaOnParentParentContext.class)})
+    public @interface MetaOnParentParent {}
+
 }
 
-class ContextHierarchyOnMethodParent {
+class ContextHierarchyOnMethodParent extends ContextHierarchyOnMethodParentParent {
+    @ContextHierarchy({@ContextConfiguration(classes = ContextHierarchyOnMethodTest.ParentLastContext.class)})
+    public void shouldLoadContextsInStraightOrderFromParent() {}
 
-    @ContextHierarchy({
-            @ContextConfiguration(classes = ContextHierarchyOnMethodTest.FirstContext.class),
-            @ContextConfiguration(classes = ContextHierarchyOnMethodTest.SecondContext.class)
-    })
-    public void shouldLoadContextsInStraightOrderFromParent() {
-    }
+    @ContextHierarchyOnMethodTest.MetaOnParent
+    public void shouldLoadContextsForMetaOnParent() {}
+}
+
+class ContextHierarchyOnMethodParentParent {
+    @ContextHierarchy({@ContextConfiguration(classes = ContextHierarchyOnMethodTest.ParentParentLastContext.class)})
+    public void shouldLoadContextsInReverseOrderFromParentParent() {}
+
+    @ContextHierarchyOnMethodTest.MetaOnParentParent
+    public void shouldLoadContextsForMetaOnParentParent() {}
 }

@@ -23,6 +23,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
@@ -39,16 +44,35 @@ public class ContextConfigurationOnMethodTest extends ContextConfigurationOnMeth
     }
 
     @Test
+    public void typeLevelAnnotationShouldInjectRightValue() {
+        assertEquals("type", bean);
+    }
+
+    @Test
     @Override
     public void shouldPickUpParentBean() {
         assertEquals("parent", bean);
     }
 
     @Test
-    public void typeLevelAnnotationShouldInjectRightValue() {
-        assertEquals("type", bean);
+    @Override
+    public void shouldPickUpParentParentBean() {
+        assertEquals("parentParent", bean);
     }
 
+    @Test
+    @Override
+    public void shouldPickUpMetaParent() {
+        assertEquals("metaOnParent", bean);
+    }
+
+    @Test
+    @Override
+    public void shouldPickUpMetaParentParent() {
+        assertEquals("metaOnParentParent", bean);
+    }
+
+    // ---------------------------------------------------------------
 
     public static class TypeContext {
         @Bean
@@ -64,14 +88,6 @@ public class ContextConfigurationOnMethodTest extends ContextConfigurationOnMeth
         }
     }
 
-}
-
-class ContextConfigurationOnMethodParent {
-
-    @ContextConfiguration(classes = ParentConfig.class)
-    public void shouldPickUpParentBean() {
-    }
-
     public static class ParentConfig {
         @Bean
         public String testBean() {
@@ -79,4 +95,50 @@ class ContextConfigurationOnMethodParent {
         }
     }
 
+    public static class ParentParentConfig {
+        @Bean
+        public String testBean() {
+            return "parentParent";
+        }
+    }
+
+    public static class MetaParentConfig {
+        @Bean
+        public String testBean() {
+            return "metaOnParent";
+        }
+    }
+
+    public static class MetaParentParentConfig {
+        @Bean
+        public String testBean() {
+            return "metaOnParentParent";
+        }
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @ContextConfiguration(classes = MetaParentConfig.class)
+    public @interface MetaOnParent {}
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @ContextConfiguration(classes = MetaParentParentConfig.class)
+    public @interface MetaOnParentParent {}
+}
+
+class ContextConfigurationOnMethodParentParent {
+    @ContextConfiguration(classes = ContextConfigurationOnMethodTest.ParentConfig.class)
+    public void shouldPickUpParentBean() {}
+
+    @ContextConfigurationOnMethodTest.MetaOnParent
+    public void shouldPickUpMetaParent() {}
+}
+
+class ContextConfigurationOnMethodParent extends ContextConfigurationOnMethodParentParent {
+    @ContextConfiguration(classes = ContextConfigurationOnMethodTest.ParentParentConfig.class)
+    public void shouldPickUpParentParentBean() {}
+
+    @ContextConfigurationOnMethodTest.MetaOnParentParent
+    public void shouldPickUpMetaParentParent() {}
 }
