@@ -150,6 +150,14 @@ abstract class BootstrapUtils {
 		}
 	}
 
+	/**
+	 * Resolve the {@link TestContextBootstrapper} type for the supplied test method.
+	 * <p>Will use
+	 * {@link org.springframework.test.context.support.DefaultTestMethodContextBootstrapper
+	 * DefaultTestMethodContextBootstrapper}.
+	 * @param testMethod the method for which to create context bootstrapper
+	 * @return a fully configured {@code TestContextBootstrapper} for particular method
+	 */
 	@SuppressWarnings("unchecked")
 	static TestContextBootstrapper resolveTestContextBootstrapper(Method testMethod) {
 		final BootstrapContext bootstrapContext = createBootstrapContext(testMethod.getDeclaringClass());
@@ -157,14 +165,10 @@ abstract class BootstrapUtils {
 
 		Class<?> clazz = null;
 		try {
-			clazz = resolveExplicitTestContextBootstrapper(testClass);
-			if (clazz == null) {
-				clazz = resolveDefaultTestContextBootstrapper(testMethod);
-			}
+			clazz = resolveDefaultTestContextBootstrapper(testMethod);
 			if (logger.isDebugEnabled()) {
 				logger.debug(String.format("Instantiating TestContextBootstrapper for test class [%s] from class [%s]",
-						testClass.getName(),
-						clazz.getName()));
+						testClass.getName(), clazz.getName()));
 			}
 			TestContextBootstrapper testContextBootstrapper = BeanUtils.instantiateClass(
 					(Constructor<? extends TestContextBootstrapper>)clazz.getConstructor(Method.class), testMethod);
