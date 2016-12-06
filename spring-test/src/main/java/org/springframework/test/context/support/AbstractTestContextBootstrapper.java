@@ -53,6 +53,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
+
+import static org.springframework.test.context.support.ContextLoaderUtils.buildContextHierarchyMap;
 
 /**
  * Abstract implementation of the {@link TestContextBootstrapper} interface which
@@ -277,34 +280,37 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 		}
 
 		if (AnnotationUtils.findAnnotation(testClass, ContextHierarchy.class) != null) {
-			Map<String, List<ContextConfigurationAttributes>> hierarchyMap =
-					ContextLoaderUtils.buildContextHierarchyMap(testClass);
-			MergedContextConfiguration parentConfig = null;
-			MergedContextConfiguration mergedConfig = null;
-
-			for (List<ContextConfigurationAttributes> list : hierarchyMap.values()) {
-				List<ContextConfigurationAttributes> reversedList = new ArrayList<>(list);
-				Collections.reverse(reversedList);
-
-				// Don't use the supplied testClass; instead ensure that we are
-				// building the MCC for the actual test class that declared the
-				// configuration for the current level in the context hierarchy.
-				Assert.notEmpty(reversedList, "ContextConfigurationAttributes list must not be empty");
-				Class<?> declaringClass = reversedList.get(0).getDeclaringClass();
-
-				mergedConfig = buildMergedContextConfiguration(
-						declaringClass, reversedList, parentConfig, cacheAwareContextLoaderDelegate, true);
-				parentConfig = mergedConfig;
-			}
-
-			// Return the last level in the context hierarchy
-			return mergedConfig;
-		}
-		else {
+			return buildMergedConfigFromHierarchyMap(() -> buildContextHierarchyMap(testClass));
+		} else {
 			return buildMergedContextConfiguration(testClass,
 					ContextLoaderUtils.resolveContextConfigurationAttributes(testClass),
 					null, cacheAwareContextLoaderDelegate, true);
 		}
+	}
+
+	protected MergedContextConfiguration buildMergedConfigFromHierarchyMap(
+			Supplier<Map<String, List<ContextConfigurationAttributes>>> hierarchyMapSupplier) {
+		Map<String, List<ContextConfigurationAttributes>> hierarchyMap = hierarchyMapSupplier.get();
+		MergedContextConfiguration parentConfig = null;
+		MergedContextConfiguration mergedConfig = null;
+
+		for (List<ContextConfigurationAttributes> list : hierarchyMap.values()) {
+			List<ContextConfigurationAttributes> reversedList = new ArrayList<>(list);
+			Collections.reverse(reversedList);
+
+			// Don't use the supplied testClass; instead ensure that we are
+			// building the MCC for the actual test class that declared the
+			// configuration for the current level in the context hierarchy.
+			Assert.notEmpty(reversedList, "ContextConfigurationAttributes list must not be empty");
+			Class<?> declaringClass = reversedList.get(0).getDeclaringClass();
+
+			mergedConfig = buildMergedContextConfiguration(
+					declaringClass, reversedList, parentConfig, getCacheAwareContextLoaderDelegate(), true);
+			parentConfig = mergedConfig;
+		}
+
+		// Return the last level in the context hierarchy
+		return mergedConfig;
 	}
 
 	protected MergedContextConfiguration buildDefaultMergedContextConfiguration(Class<?> testClass,

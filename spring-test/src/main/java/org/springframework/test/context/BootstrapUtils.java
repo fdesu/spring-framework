@@ -21,7 +21,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.test.context.support.DefaultTestMethodContextBootstrapper;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -152,38 +151,37 @@ abstract class BootstrapUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-    static TestContextBootstrapper resolveTestContextBootstrapper(Method testMethod) {
-        final BootstrapContext bootstrapContext = createBootstrapContext(testMethod.getDeclaringClass());
-        Class<?> testClass = bootstrapContext.getTestClass();
+	static TestContextBootstrapper resolveTestContextBootstrapper(Method testMethod) {
+		final BootstrapContext bootstrapContext = createBootstrapContext(testMethod.getDeclaringClass());
+		Class<?> testClass = bootstrapContext.getTestClass();
 
-        Class<?> clazz = null;
-        try {
-            clazz = resolveExplicitTestContextBootstrapper(testClass);
-            if (clazz == null) {
-                clazz = resolveDefaultTestContextBootstrapper(testMethod);
-            }
-            if (logger.isDebugEnabled()) {
-                logger.debug(String.format("Instantiating TestContextBootstrapper for test class [%s] from class [%s]",
-                        testClass.getName(), clazz.getName()));
-            }
-            DefaultTestMethodContextBootstrapper testContextBootstrapper = BeanUtils.instantiateClass(
-                    clazz, DefaultTestMethodContextBootstrapper.class);
-            testContextBootstrapper.setBootstrapContext(bootstrapContext);
-            testContextBootstrapper.setTestMethod(testMethod);
-            return testContextBootstrapper;
-        }
-        catch (IllegalStateException ex) {
-            throw ex;
-        }
-        catch (Throwable ex) {
-            throw new IllegalStateException("Could not load TestContextBootstrapper [" + clazz +
-                    "]. Specify @BootstrapWith's 'value' attribute or make the default bootstrapper class available.",
-                    ex);
-        }
-    }
+		Class<?> clazz = null;
+		try {
+			clazz = resolveExplicitTestContextBootstrapper(testClass);
+			if (clazz == null) {
+				clazz = resolveDefaultTestContextBootstrapper(testMethod);
+			}
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("Instantiating TestContextBootstrapper for test class [%s] from class [%s]",
+						testClass.getName(),
+						clazz.getName()));
+			}
+			TestContextBootstrapper testContextBootstrapper = BeanUtils.instantiateClass(
+					(Constructor<? extends TestContextBootstrapper>)clazz.getConstructor(Method.class), testMethod);
+			testContextBootstrapper.setBootstrapContext(bootstrapContext);
+			return testContextBootstrapper;
+		} catch (IllegalStateException ex) {
+			throw ex;
+		} catch (Throwable ex) {
+			throw new IllegalStateException("Could not load TestContextBootstrapper [" + clazz +
+					"]. Specify @BootstrapWith's 'value' attribute or make the default bootstrapper class available.",
+					ex);
+		}
+	}
 
 	private static Class<?> resolveExplicitTestContextBootstrapper(Class<?> testClass) {
-		Set<BootstrapWith> annotations = AnnotatedElementUtils.findAllMergedAnnotations(testClass, BootstrapWith.class);
+		Set<BootstrapWith> annotations = AnnotatedElementUtils.findAllMergedAnnotations(testClass, BootstrapWith
+				.class);
 		if (annotations.size() < 1) {
 			return null;
 		}
