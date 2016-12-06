@@ -288,6 +288,12 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 		}
 	}
 
+	/**
+	 * Convenience method to build {@linkplain MergedContextConfiguration merged configuration}
+	 * for the supplied context hierarchy map.
+	 * @param hierarchyMapSupplier supplies process with context hierarchy map
+	 * @return the merged context configuration
+	 */
 	protected MergedContextConfiguration buildMergedConfigFromHierarchyMap(
 			Supplier<Map<String, List<ContextConfigurationAttributes>>> hierarchyMapSupplier) {
 		Map<String, List<ContextConfigurationAttributes>> hierarchyMap = hierarchyMapSupplier.get();
@@ -304,8 +310,8 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 			Assert.notEmpty(reversedList, "ContextConfigurationAttributes list must not be empty");
 			Class<?> declaringClass = reversedList.get(0).getDeclaringClass();
 
-			mergedConfig = buildMergedContextConfiguration(
-					declaringClass, reversedList, parentConfig, getCacheAwareContextLoaderDelegate(), true);
+			mergedConfig = buildMergedContextConfiguration( declaringClass, reversedList, parentConfig,
+					getCacheAwareContextLoaderDelegate(), true);
 			parentConfig = mergedConfig;
 		}
 
@@ -313,7 +319,7 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 		return mergedConfig;
 	}
 
-	protected MergedContextConfiguration buildDefaultMergedContextConfiguration(Class<?> testClass,
+	private MergedContextConfiguration buildDefaultMergedContextConfiguration(Class<?> testClass,
 			CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate) {
 
 		List<ContextConfigurationAttributes> defaultConfigAttributesList =

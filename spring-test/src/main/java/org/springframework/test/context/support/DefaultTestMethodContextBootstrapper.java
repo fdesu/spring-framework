@@ -16,10 +16,11 @@
 
 package org.springframework.test.context.support;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.test.context.CacheAwareContextLoaderDelegate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.ContextConfigurationAttributes;
 import org.springframework.test.context.ContextHierarchy;
 import org.springframework.test.context.ContextLoader;
 import org.springframework.test.context.MergedContextConfiguration;
@@ -28,8 +29,8 @@ import org.springframework.test.context.TestContextBootstrapper;
 import org.springframework.test.util.MetaAnnotationUtils;
 
 import java.lang.reflect.Method;
-import java.util.List;
 
+import static java.lang.String.format;
 import static org.springframework.test.context.support.ContextLoaderUtils.buildContextHierarchyMap;
 import static org.springframework.test.context.support.ContextLoaderUtils.resolveContextConfigurationAttributes;
 
@@ -41,6 +42,7 @@ import static org.springframework.test.context.support.ContextLoaderUtils.resolv
  * @since 5.0
  */
 public class DefaultTestMethodContextBootstrapper extends DefaultTestContextBootstrapper {
+	private final Log logger = LogFactory.getLog(getClass());
 
 	private final Method testMethod;
 
@@ -61,31 +63,31 @@ public class DefaultTestMethodContextBootstrapper extends DefaultTestContextBoot
 
 	/**
 	 * Build the {@linkplain MergedContextConfiguration merged context configuration}
-	 * for the supplied test method.
+	 * for the supplied test testMethod.
 	 *
-	 * @param method supplied method for which to create merged context configuration
+	 * @param testMethod supplied testMethod for which to create merged context configuration
 	 *
 	 * @return the merged context configuration, never {@code null}
 	 *
 	 * @see #buildMergedContextConfiguration()
 	 * @see #buildTestContext()
 	 */
-	protected MergedContextConfiguration buildMergedContextConfiguration(Method method) {
+	protected MergedContextConfiguration buildMergedContextConfiguration(Method testMethod) {
 		CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate = getCacheAwareContextLoaderDelegate();
 
-		if (MetaAnnotationUtils.findAnnotationDescriptorForTypes(method,
-				ContextConfiguration.class,
-				ContextHierarchy.class) == null) {
-			return buildDefaultMergedContextConfiguration(getBootstrapContext().getTestClass(),
-					cacheAwareContextLoaderDelegate);
+		if (MetaAnnotationUtils.findAnnotationDescriptorForTypes(
+				testMethod, ContextConfiguration.class, ContextHierarchy.class) == null) {
+			String msg = format("Neither @ContextConfiguration nor @ContextHierarchy found for test method [%s]",
+					testMethod.getName());
+			logger.error(msg);
+			throw new IllegalStateException(msg);
 		}
 
-		if (AnnotationUtils.findAnnotation(method, ContextHierarchy.class) != null) {
-			return buildMergedConfigFromHierarchyMap(() -> buildContextHierarchyMap(method));
+		if (AnnotationUtils.findAnnotation(testMethod, ContextHierarchy.class) != null) {
+			return buildMergedConfigFromHierarchyMap(() -> buildContextHierarchyMap(testMethod));
 		} else {
-			List<ContextConfigurationAttributes> configAttributesList = resolveContextConfigurationAttributes(method);
-			return buildMergedContextConfiguration(method.getDeclaringClass(), configAttributesList, null,
-					cacheAwareContextLoaderDelegate, true);
+			return buildMergedContextConfiguration(testMethod.getDeclaringClass(),
+					resolveContextConfigurationAttributes(testMethod), null, cacheAwareContextLoaderDelegate, true);
 		}
 	}
 }
