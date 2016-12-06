@@ -50,8 +50,8 @@ abstract class BootstrapUtils {
 	private static final String DEFAULT_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME =
 			"org.springframework.test.context.support.DefaultTestContextBootstrapper";
 
-    private static final String DEFAULT_TEST_METHOD_CONTEXT_BOOTSTRAPPER_CLASS_NAME =
-            "org.springframework.test.context.support.DefaultTestMethodContextBootstrapper";
+	private static final String DEFAULT_TEST_METHOD_CONTEXT_BOOTSTRAPPER_CLASS_NAME =
+			"org.springframework.test.context.support.DefaultTestMethodContextBootstrapper";
 
 	private static final String DEFAULT_WEB_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME =
 			"org.springframework.test.context.web.WebTestContextBootstrapper";
@@ -201,14 +201,14 @@ abstract class BootstrapUtils {
 		return ClassUtils.forName(DEFAULT_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME, classLoader);
 	}
 
-    private static Class<?> resolveDefaultTestContextBootstrapper(Method testMethod) throws Exception {
-        ClassLoader classLoader = BootstrapUtils.class.getClassLoader();
-        AnnotationAttributes attributes = AnnotatedElementUtils.findMergedAnnotationAttributes(
-                testMethod, WEB_APP_CONFIGURATION_ANNOTATION_CLASS_NAME, false, false);
-        if (attributes != null) {
-            return ClassUtils.forName(DEFAULT_WEB_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME, classLoader);
-        }
-        return ClassUtils.forName(DEFAULT_TEST_METHOD_CONTEXT_BOOTSTRAPPER_CLASS_NAME, classLoader);
-    }
+	private static Class<?> resolveDefaultTestContextBootstrapper(Method testMethod) throws Exception {
+		ClassLoader classLoader = BootstrapUtils.class.getClassLoader();
+		AnnotationAttributes attributes = AnnotatedElementUtils.findMergedAnnotationAttributes(
+				testMethod, WEB_APP_CONFIGURATION_ANNOTATION_CLASS_NAME, false, false);
+		if (attributes != null) {
+			return ClassUtils.forName(DEFAULT_WEB_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME, classLoader);
+		}
+		return ClassUtils.forName(DEFAULT_TEST_METHOD_CONTEXT_BOOTSTRAPPER_CLASS_NAME, classLoader);
+	}
 
 }
