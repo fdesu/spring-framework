@@ -18,7 +18,6 @@ package org.springframework.test.context;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.test.util.MetaAnnotationUtils.UntypedAnnotationDescriptor;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
@@ -284,8 +283,8 @@ public class TestContextManager {
 	 */
 	public void beforeTestMethod(Object testInstance, Method testMethod) throws Exception {
 		String callbackName = "beforeTestMethod";
-        prepareForBeforeCallback(callbackName, testInstance, testMethod);
-        TestContext preparedContext = prepareTestContextBeforeMethod(getTestContext());
+		prepareForBeforeCallback(callbackName, testInstance, testMethod);
+		TestContext preparedContext = prepareTestContextBeforeMethod(getTestContext());
 
 		for (TestExecutionListener testExecutionListener : getTestExecutionListeners()) {
 			try {
@@ -297,24 +296,44 @@ public class TestContextManager {
 		}
 	}
 
-    protected TestContext prepareTestContextBeforeMethod(TestContext originalTestContext) {
-        Method testMethod = originalTestContext.getTestMethod();
-        if (testMethod != null) {
-            UntypedAnnotationDescriptor descriptor = findAnnotationDescriptorForTypes(testMethod,
-                    ContextConfiguration.class, ContextHierarchy.class);
-            if (descriptor != null) {
-                return createThrowAwayContext(testMethod, originalTestContext);
-            }
-        }
-        return originalTestContext;
-    }
+	/**
+	 * Prepares {@linkplain TestContext test context} in the sense
+	 * that if current test method annotated with context configuration
+	 * annotation e.g. {@link ContextConfiguration}, {@link ContextHierarchy}
+	 * then emits throw-away context, constructed specifically for current
+	 * test method, otherwise returns original test context without modifications.
+	 *
+	 * @param originalTestContext test class test context
+	 * @return throw-away context if current method has context annotation or
+	 * originalTestContext otherwise.
+	 *
+	 * @since 5.0
+	 */
+	private TestContext prepareTestContextBeforeMethod(TestContext originalTestContext) {
+		Method testMethod = originalTestContext.getTestMethod();
+		if (testMethod != null && findAnnotationDescriptorForTypes(testMethod, ContextConfiguration.class,
+				ContextHierarchy.class) != null) {
+			return createThrowAwayContext(testMethod, originalTestContext);
+		}
+		return originalTestContext;
+	}
 
-    protected TestContext createThrowAwayContext(Method testMethod, TestContext originalContext) {
-        TestContext throwAwayContext = BootstrapUtils.resolveTestContextBootstrapper(testMethod).buildTestContext();
-        throwAwayContext.updateState(originalContext.getTestInstance(), testMethod, null);
-        throwAwayContext.setAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
-        return throwAwayContext;
-    }
+	/**
+	 * Creates throw-away context for supplied {@linkplain Method testMethod}
+	 * and copies the state of original context in the created one.
+	 * Sets an attribute REINJECT_DEPENDENCIES_ATTRIBUTE of the created context
+	 * to <code>true</code> to make reinjection.
+	 * @param testMethod test method annotated with context configuration annotation
+	 * @param originalContext original test context to copy state into created one
+	 * @return throw-away context for specified test method
+	 * @since 5.0
+	 */
+	private TestContext createThrowAwayContext(Method testMethod, TestContext originalContext) {
+		TestContext throwAwayContext = BootstrapUtils.resolveTestContextBootstrapper(testMethod).buildTestContext();
+		throwAwayContext.updateState(originalContext.getTestInstance(), testMethod, null);
+		throwAwayContext.setAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE, Boolean.TRUE);
+		return throwAwayContext;
+	}
 
     /**
 	 * Hook for pre-processing a test <em>immediately before</em> execution of
