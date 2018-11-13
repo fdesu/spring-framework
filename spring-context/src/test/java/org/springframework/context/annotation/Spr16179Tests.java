@@ -34,8 +34,8 @@ public class Spr16179Tests {
 				new AnnotationConfigApplicationContext(AssemblerConfig.class, AssemblerInjection.class);
 
 		assertSame(bf.getBean("someAssembler"), bf.getBean(AssemblerInjection.class).assembler0);
-		// assertNull(bf.getBean(AssemblerInjection.class).assembler1);  TODO: accidental match
-		// assertNull(bf.getBean(AssemblerInjection.class).assembler2);
+		assertSame(null, bf.getBean(AssemblerInjection.class).assembler1);
+		assertSame(null, bf.getBean(AssemblerInjection.class).assembler2);
 		assertSame(bf.getBean("pageAssembler"), bf.getBean(AssemblerInjection.class).assembler3);
 		assertSame(bf.getBean("pageAssembler"), bf.getBean(AssemblerInjection.class).assembler4);
 		assertSame(bf.getBean("pageAssembler"), bf.getBean(AssemblerInjection.class).assembler5);
