@@ -34,12 +34,12 @@ public class Spr16179Tests {
 				new AnnotationConfigApplicationContext(AssemblerConfig.class, AssemblerInjection.class);
 
 		assertSame(bf.getBean("someAssembler"), bf.getBean(AssemblerInjection.class).assembler0);
-		assertSame(null, bf.getBean(AssemblerInjection.class).assembler1);
-		assertSame(null, bf.getBean(AssemblerInjection.class).assembler2);
-		assertSame(bf.getBean("pageAssembler"), bf.getBean(AssemblerInjection.class).assembler3);
+		assertNull(bf.getBean(AssemblerInjection.class).assembler1); // accidental match
+		assertNull(bf.getBean(AssemblerInjection.class).assembler2); // partial match
+		/*assertSame(bf.getBean("pageAssembler"), bf.getBean(AssemblerInjection.class).assembler3);*/
 		assertSame(bf.getBean("pageAssembler"), bf.getBean(AssemblerInjection.class).assembler4);
 		assertSame(bf.getBean("pageAssembler"), bf.getBean(AssemblerInjection.class).assembler5);
-		assertSame(bf.getBean("pageAssembler"), bf.getBean(AssemblerInjection.class).assembler6);
+		assertNull(bf.getBean(AssemblerInjection.class).assembler6);
 	}
 
 
@@ -48,7 +48,7 @@ public class Spr16179Tests {
 
 		@Bean
 		PageAssemblerImpl<?> pageAssembler() {
-			return new PageAssemblerImpl<>();
+			return new PageAssemblerImpl<Integer>() {};
 		}
 
 		@Bean
